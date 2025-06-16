@@ -57,7 +57,28 @@ class WF_Settings_Framework {
 
     public function get_value($id) {
         $options = get_option($this->option_name, []);
-        return isset($options[$id]) ? $options[$id] : null;
+        $value = isset($options[$id]) ? $options[$id] : null;
+        
+        // Check if this is a range field and parse the value into an array
+        foreach ($this->fields as $field) {
+            if ($field['id'] === $id && $field['type'] === 'range') {
+                if ($value && strpos($value, '-') !== false) {
+                    $parts = explode('-', $value);
+                    return [
+                        'min' => (int) $parts[0],
+                        'max' => (int) $parts[1]
+                    ];
+                } else {
+                    // Return default values if no value is saved yet
+                    return [
+                        'min' => isset($field['min']) ? (int) $field['min'] : 0,
+                        'max' => isset($field['max']) ? (int) $field['max'] : 100
+                    ];
+                }
+            }
+        }
+        
+        return $value;
     }
 
     private function add_notification($message, $type = 'success') {
@@ -184,11 +205,32 @@ class WF_Settings_Framework {
                 echo '<input type="hidden" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" />';
                 break;
             case 'slider':
-            case 'range':
-                $input_type = $type === 'slider' ? 'range' : 'range';
                 echo '<div class="wf-range-container">';
-                echo '<input type="' . $input_type . '" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="wf-input-range" ' . $min . ' ' . $max . ' ' . $step . ' ' . $required . ' />';
+                echo '<input type="range" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="wf-input-range" ' . $min . ' ' . $max . ' ' . $step . ' ' . $required . ' />';
                 echo '<span class="wf-range-value" data-target="' . $id . '">' . esc_attr($value) . '</span>';
+                echo '</div>';
+                break;
+            case 'range':
+                // Parse existing value or set defaults
+                $range_value = $value ? $value : '';
+                $min_val = $max_val = '';
+                if ($range_value && strpos($range_value, '-') !== false) {
+                    list($min_val, $max_val) = explode('-', $range_value);
+                } else {
+                    $min_val = isset($field['min']) ? $field['min'] : '0';
+                    $max_val = isset($field['max']) ? $field['max'] : '100';
+                }
+                
+                echo '<div class="wf-dual-range-container">';
+                echo '<input type="hidden" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($range_value) . '" />';
+                echo '<span class="wf-range-value wf-range-min">' . esc_attr($min_val) . '</span>';
+                echo '<div class="wf-dual-range-slider" data-min="' . (isset($field['min']) ? esc_attr($field['min']) : '0') . '" data-max="' . (isset($field['max']) ? esc_attr($field['max']) : '100') . '" data-step="' . (isset($field['step']) ? esc_attr($field['step']) : '1') . '" data-target="' . $id . '">';
+                echo '<div class="wf-dual-range-track"></div>';
+                echo '<div class="wf-dual-range-fill"></div>';
+                echo '<div class="wf-dual-range-thumb wf-dual-range-thumb-min" data-value="' . esc_attr($min_val) . '"></div>';
+                echo '<div class="wf-dual-range-thumb wf-dual-range-thumb-max" data-value="' . esc_attr($max_val) . '"></div>';
+                echo '</div>';
+                echo '<span class="wf-range-value wf-range-max">' . esc_attr($max_val) . '</span>';
                 echo '</div>';
                 break;
             default:
@@ -275,7 +317,15 @@ class WF_Settings_Framework {
 
 // Helper function
 function wf_settings_val($id) {
-    return WF_Settings_Framework::instance()->get_value($id);
+    $instance = WF_Settings_Framework::instance();
+    
+    // Load fields if they haven't been loaded yet
+    if (empty($instance->get_fields())) {
+        $fields = include __DIR__ . '/wf-settings-fields.php';
+        $instance->set_fields($fields);
+    }
+    
+    return $instance->get_value($id);
 }
 
 // Example usage (move to your plugin's admin page)
