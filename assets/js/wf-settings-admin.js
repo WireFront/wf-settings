@@ -63,4 +63,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Range/Slider value display functionality
+    document.querySelectorAll('.wf-input-range').forEach(function(rangeInput) {
+        var valueDisplay = rangeInput.parentElement.querySelector('.wf-range-value');
+        
+        if (valueDisplay) {
+            // Initialize the display with current value
+            valueDisplay.textContent = rangeInput.value || rangeInput.min || '0';
+            
+            // Update value display when slider changes
+            rangeInput.addEventListener('input', function() {
+                valueDisplay.textContent = this.value;
+            });
+            
+            // Also update on change event for better compatibility
+            rangeInput.addEventListener('change', function() {
+                valueDisplay.textContent = this.value;
+            });
+        }
+    });
 });
