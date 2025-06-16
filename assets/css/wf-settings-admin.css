@@ -78,7 +78,7 @@ form.wf-settings-form {
 }
 
 .wf-field input[type="range"]{
-  padding: 5px 0;
+  padding: 3px 0;
 }
 
 /* Custom color picker styling */
@@ -105,7 +105,14 @@ form.wf-settings-form {
 .wf-field select:focus {
   border-color: #2563eb;
   background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
+.wf-field input[type="range"]:focus {
+  border-color: transparent;
+  background: #fafbfc;
+  box-shadow: none
+}
+
 .wf-field input[type="checkbox"] {
   width: 18px;
   height: 18px;
@@ -189,6 +196,111 @@ input[type="radio"]::-ms-check {
 .wf-field input[type="range"],
 .wf-field input[type="slider"] {
   width: 100%;
+}
+
+/* Basic Range Slider Thumb Styling */
+.wf-field input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 5px;
+  outline: none;
+  transition: background 0.2s ease;
+}
+
+.wf-field input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #2563eb;
+  border: 2px solid #2563eb;
+  border-radius: 50%;
+  cursor: grab;
+  transition: box-shadow 0.2s ease;
+}
+
+.wf-field input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.wf-field input[type="range"]::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.2);
+}
+
+/* Firefox */
+.wf-field input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border: 2px solid #2563eb;
+  border-radius: 50%;
+  cursor: grab;
+  transition: box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.wf-field input[type="range"]::-moz-range-thumb:hover {
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.wf-field input[type="range"]::-moz-range-thumb:active {
+  cursor: grabbing;
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.2);
+}
+
+.wf-field input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  border: none;
+}
+
+.wf-field input[type="range"]::-moz-range-progress {
+  height: 6px;
+  background: #2563eb;
+  border-radius: 3px;
+  border: none;
+}
+
+/* Microsoft Edge/IE */
+.wf-field input[type="range"]::-ms-thumb {
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border: 2px solid #2563eb;
+  border-radius: 50%;
+  cursor: grab;
+  transition: box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.wf-field input[type="range"]::-ms-thumb:hover {
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.wf-field input[type="range"]::-ms-thumb:active {
+  cursor: grabbing;
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.2);
+}
+
+.wf-field input[type="range"]::-ms-track {
+  height: 6px;
+  background: transparent;
+  border: none;
+  color: transparent;
+}
+
+.wf-field input[type="range"]::-ms-fill-lower {
+  background: #2563eb;
+  border-radius: 3px;
+}
+
+.wf-field input[type="range"]::-ms-fill-upper {
+  background: #e2e8f0;
+  border-radius: 3px;
 }
 
 /* Range input container and value display */
