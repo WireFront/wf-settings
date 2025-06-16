@@ -26,6 +26,7 @@ add_action('admin_enqueue_scripts', function($hook) {
 class WF_Settings_Framework {
     private static $instance = null;
     private $fields = [];
+    private $page_config = [];
     private $option_name = 'wf_settings';
 
     public static function instance() {
@@ -36,6 +37,16 @@ class WF_Settings_Framework {
     }
 
     public function set_fields($fields) {
+        // Extract page configuration if present
+        if (isset($fields['page_title']) || isset($fields['page_description'])) {
+            $this->page_config = [
+                'title' => isset($fields['page_title']) ? $fields['page_title'] : 'Settings',
+                'description' => isset($fields['page_description']) ? $fields['page_description'] : ''
+            ];
+            // Remove page config from fields array
+            unset($fields['page_title']);
+            unset($fields['page_description']);
+        }
         $this->fields = $fields;
     }
 
@@ -48,7 +59,21 @@ class WF_Settings_Framework {
         return isset($options[$id]) ? $options[$id] : null;
     }
 
+    public function render_page_header() {
+        if (!empty($this->page_config)) {
+            echo '<div class="wf-page-header">';
+            if (!empty($this->page_config['title'])) {
+                echo '<h1 class="wf-page-title">' . esc_html($this->page_config['title']) . '</h1>';
+            }
+            if (!empty($this->page_config['description'])) {
+                echo '<p class="wf-page-description">' . esc_html($this->page_config['description']) . '</p>';
+            }
+            echo '</div>';
+        }
+    }
+
     public function render_form() {
+        $this->render_page_header();
         $fields = $this->fields;
         $options = get_option($this->option_name, []);
         echo '<form method="post" enctype="multipart/form-data" class="wf-settings-form">';
