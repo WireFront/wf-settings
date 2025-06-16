@@ -13,12 +13,12 @@ return [
         "label" => "Textbox Label",
         "type" => "textbox",
         "value" => null,
-        "placeholder" => "Enter text here",
+        "placeholder" => "Enter at least 3 characters",
         "required" => true,
-        "description" => "Enter a text value between 1 and 255 characters. This field is required.",
+        "description" => "Enter a text value between 3 and 255 characters. This field is required.",
         "validation" => [
             "type" => "string",
-            "minLength" => 1,
+            "minLength" => 3,
             "maxLength" => 255
         ]
     ],
