@@ -186,7 +186,10 @@ class WF_Settings_Framework {
             case 'slider':
             case 'range':
                 $input_type = $type === 'slider' ? 'range' : 'range';
+                echo '<div class="wf-range-container">';
                 echo '<input type="' . $input_type . '" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="wf-input-range" ' . $min . ' ' . $max . ' ' . $step . ' ' . $required . ' />';
+                echo '<span class="wf-range-value" data-target="' . $id . '">' . esc_attr($value) . '</span>';
+                echo '</div>';
                 break;
             default:
                 echo '<input type="text" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="wf-input-text" ' . $placeholder . ' ' . $required . ' />';
