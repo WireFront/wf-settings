@@ -28,6 +28,7 @@ class WF_Settings_Framework {
     private $fields = [];
     private $page_config = [];
     private $option_name = 'wf_settings';
+    private $notifications = [];
 
     public static function instance() {
         if (self::$instance === null) {
@@ -59,6 +60,29 @@ class WF_Settings_Framework {
         return isset($options[$id]) ? $options[$id] : null;
     }
 
+    private function add_notification($message, $type = 'success') {
+        $this->notifications[] = [
+            'message' => $message,
+            'type' => $type
+        ];
+    }
+
+    private function render_notifications() {
+        if (!empty($this->notifications)) {
+            echo '<div class="wf-notifications">';
+            foreach ($this->notifications as $notification) {
+                $type_class = $notification['type'] === 'error' ? 'wf-notification-error' : 'wf-notification-success';
+                $icon = $notification['type'] === 'error' ? '⚠️' : '✅';
+                echo '<div class="wf-notification ' . $type_class . '">';
+                echo '<span class="wf-notification-icon">' . $icon . '</span>';
+                echo '<span class="wf-notification-message">' . esc_html($notification['message']) . '</span>';
+                echo '<button class="wf-notification-close" onclick="this.parentElement.style.display=\'none\'">&times;</button>';
+                echo '</div>';
+            }
+            echo '</div>';
+        }
+    }
+
     public function render_page_header() {
         if (!empty($this->page_config)) {
             echo '<div class="wf-page-header">';
@@ -74,6 +98,7 @@ class WF_Settings_Framework {
 
     public function render_form() {
         $this->render_page_header();
+        $this->render_notifications();
         $fields = $this->fields;
         $options = get_option($this->option_name, []);
         echo '<form method="post" enctype="multipart/form-data" class="wf-settings-form">';
@@ -172,25 +197,60 @@ class WF_Settings_Framework {
 
     public function handle_save() {
         if (isset($_POST['wf_settings_nonce']) && wp_verify_nonce($_POST['wf_settings_nonce'], 'wf_settings_save')) {
-            $fields = $this->fields;
-            $new_values = [];
-            foreach ($fields as $field) {
-                $id = $field['id'];
-                if ($field['type'] === 'file') {
-                    // File upload handling can be added here
-                    continue;
+            try {
+                $fields = $this->fields;
+                $new_values = [];
+                $validation_errors = [];
+                
+                foreach ($fields as $field) {
+                    $id = $field['id'];
+                    if ($field['type'] === 'file') {
+                        // File upload handling can be added here
+                        continue;
+                    }
+                    
+                    $val = isset($_POST['wf_settings'][$id]) ? $_POST['wf_settings'][$id] : null;
+                    
+                    // Check required fields
+                    if (!empty($field['required']) && (empty($val) && $val !== '0')) {
+                        $label = isset($field['label']) ? $field['label'] : $id;
+                        $validation_errors[] = "Field '{$label}' is required.";
+                        continue;
+                    }
+                    
+                    // Basic validation (expand as needed)
+                    if (isset($field['validation'])) {
+                        $validated_val = $this->validate($val, $field['validation']);
+                        if ($validated_val === false) {
+                            $label = isset($field['label']) ? $field['label'] : $id;
+                            $validation_errors[] = "Field '{$label}' contains invalid data.";
+                            continue;
+                        }
+                        $val = $validated_val;
+                    }
+                    
+                    $new_values[$id] = $val;
                 }
-                $val = isset($_POST['wf_settings'][$id]) ? $_POST['wf_settings'][$id] : null;
-                // Basic validation (expand as needed)
-                if (isset($field['validation'])) {
-                    $val = $this->validate($val, $field['validation']);
+                
+                if (!empty($validation_errors)) {
+                    foreach ($validation_errors as $error) {
+                        $this->add_notification($error, 'error');
+                    }
+                    return;
                 }
-                $new_values[$id] = $val;
+                
+                $result = update_option($this->option_name, $new_values);
+                if ($result !== false) {
+                    $this->add_notification('Settings saved successfully!', 'success');
+                } else {
+                    $this->add_notification('Settings may not have changed or failed to save.', 'error');
+                }
+                
+            } catch (Exception $e) {
+                $this->add_notification('An error occurred while saving settings: ' . $e->getMessage(), 'error');
             }
-            update_option($this->option_name, $new_values);
-            add_action('admin_notices', function() {
-                echo '<div class="notice notice-success is-dismissible"><p>Settings saved.</p></div>';
-            });
+        } else if (isset($_POST['wf_settings_nonce'])) {
+            $this->add_notification('Security verification failed. Please try again.', 'error');
         }
     }
 
@@ -199,8 +259,12 @@ class WF_Settings_Framework {
         if ($rules['type'] === 'string') {
             $val = sanitize_text_field($val);
             $len = strlen($val);
-            if (isset($rules['minLength']) && $len < $rules['minLength']) return '';
-            if (isset($rules['maxLength']) && $len > $rules['maxLength']) $val = substr($val, 0, $rules['maxLength']);
+            if (isset($rules['minLength']) && $len < $rules['minLength']) {
+                return false; // Validation failed
+            }
+            if (isset($rules['maxLength']) && $len > $rules['maxLength']) {
+                $val = substr($val, 0, $rules['maxLength']);
+            }
         }
         return $val;
     }
