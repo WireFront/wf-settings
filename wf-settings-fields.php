@@ -3,6 +3,11 @@
 // Define your settings fields here as an array. This file is loaded by the main plugin.
 
 return [
+    // Page configuration (special fields for page settings)
+    "page_title" => "My Plugin Settings",
+    "page_description" => "Configure your plugin options below. These settings will be saved and applied across your website.",
+    
+    // Regular fields
     [
         "id" => "textbox-id",
         "label" => "Textbox Label",
