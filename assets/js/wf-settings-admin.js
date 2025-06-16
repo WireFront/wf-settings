@@ -83,4 +83,137 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+
+    // Dual Range Slider functionality
+    document.querySelectorAll('.wf-dual-range-slider').forEach(function(slider) {
+        var minThumb = slider.querySelector('.wf-dual-range-thumb-min');
+        var maxThumb = slider.querySelector('.wf-dual-range-thumb-max');
+        var fill = slider.querySelector('.wf-dual-range-fill');
+        var hiddenInput = document.getElementById(slider.dataset.target);
+        var minDisplay = slider.parentElement.querySelector('.wf-range-min');
+        var maxDisplay = slider.parentElement.querySelector('.wf-range-max');
+        
+        var min = parseFloat(slider.dataset.min);
+        var max = parseFloat(slider.dataset.max);
+        var step = parseFloat(slider.dataset.step) || 1;
+        
+        var minValue = parseFloat(minThumb.dataset.value) || min;
+        var maxValue = parseFloat(maxThumb.dataset.value) || max;
+        
+        // Initialize positions and displays
+        updateSlider();
+        
+        function updateSlider() {
+            var minPercent = ((minValue - min) / (max - min)) * 100;
+            var maxPercent = ((maxValue - min) / (max - min)) * 100;
+            
+            minThumb.style.left = minPercent + '%';
+            maxThumb.style.left = maxPercent + '%';
+            
+            fill.style.left = minPercent + '%';
+            fill.style.width = (maxPercent - minPercent) + '%';
+            
+            minDisplay.textContent = minValue;
+            maxDisplay.textContent = maxValue;
+            
+            hiddenInput.value = minValue + '-' + maxValue;
+        }
+        
+        function handleMouseDown(thumb, isMin) {
+            return function(e) {
+                e.preventDefault();
+                
+                function handleMouseMove(e) {
+                    var rect = slider.getBoundingClientRect();
+                    var percent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+                    var value = min + (percent / 100) * (max - min);
+                    
+                    // Round to step
+                    value = Math.round(value / step) * step;
+                    
+                    if (isMin) {
+                        minValue = Math.min(value, maxValue - step);
+                        minValue = Math.max(minValue, min);
+                    } else {
+                        maxValue = Math.max(value, minValue + step);
+                        maxValue = Math.min(maxValue, max);
+                    }
+                    
+                    updateSlider();
+                }
+                
+                function handleMouseUp() {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                }
+                
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            };
+        }
+        
+        // Touch support
+        function handleTouchStart(thumb, isMin) {
+            return function(e) {
+                e.preventDefault();
+                
+                function handleTouchMove(e) {
+                    var touch = e.touches[0];
+                    var rect = slider.getBoundingClientRect();
+                    var percent = Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100));
+                    var value = min + (percent / 100) * (max - min);
+                    
+                    // Round to step
+                    value = Math.round(value / step) * step;
+                    
+                    if (isMin) {
+                        minValue = Math.min(value, maxValue - step);
+                        minValue = Math.max(minValue, min);
+                    } else {
+                        maxValue = Math.max(value, minValue + step);
+                        maxValue = Math.min(maxValue, max);
+                    }
+                    
+                    updateSlider();
+                }
+                
+                function handleTouchEnd() {
+                    document.removeEventListener('touchmove', handleTouchMove);
+                    document.removeEventListener('touchend', handleTouchEnd);
+                }
+                
+                document.addEventListener('touchmove', handleTouchMove);
+                document.addEventListener('touchend', handleTouchEnd);
+            };
+        }
+        
+        // Attach event listeners
+        minThumb.addEventListener('mousedown', handleMouseDown(minThumb, true));
+        maxThumb.addEventListener('mousedown', handleMouseDown(maxThumb, false));
+        minThumb.addEventListener('touchstart', handleTouchStart(minThumb, true));
+        maxThumb.addEventListener('touchstart', handleTouchStart(maxThumb, false));
+        
+        // Click on track to move nearest thumb
+        slider.addEventListener('click', function(e) {
+            if (e.target === minThumb || e.target === maxThumb) return;
+            
+            var rect = slider.getBoundingClientRect();
+            var percent = ((e.clientX - rect.left) / rect.width) * 100;
+            var value = min + (percent / 100) * (max - min);
+            value = Math.round(value / step) * step;
+            
+            var distToMin = Math.abs(value - minValue);
+            var distToMax = Math.abs(value - maxValue);
+            
+            if (distToMin < distToMax) {
+                minValue = Math.min(value, maxValue - step);
+                minValue = Math.max(minValue, min);
+            } else {
+                maxValue = Math.max(value, minValue + step);
+                maxValue = Math.min(maxValue, max);
+            }
+            
+            updateSlider();
+        });
+    });
 });
