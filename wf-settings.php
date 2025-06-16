@@ -99,6 +99,11 @@ class WF_Settings_Framework {
         echo '<div class="wf-field wf-field-' . esc_attr($type) . '">';
         if ($type !== 'hidden') {
             echo '<label for="' . $id . '">' . $label . '</label> ';
+            
+            // Render field description right after the label
+            if (isset($field['description']) && !empty($field['description'])) {
+                echo '<p class="wf-field-description">' . esc_html($field['description']) . '</p>';
+            }
         }
         switch ($type) {
             case 'textbox':
@@ -161,6 +166,7 @@ class WF_Settings_Framework {
             default:
                 echo '<input type="text" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="wf-input-text" ' . $placeholder . ' ' . $required . ' />';
         }
+        
         echo '</div>';
     }
 
