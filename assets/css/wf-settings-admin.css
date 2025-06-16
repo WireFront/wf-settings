@@ -70,7 +70,7 @@ form.wf-settings-form {
 .wf-field select {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 5px 12px;
+  padding: 5px 0;
   font-size: 15px;
   background: #fafbfc;
   transition: border 0.2s;
@@ -154,7 +154,7 @@ form.wf-settings-form {
   height: 10px;
   background: #2563eb;
   border-radius: 50%;
-  transform: translate(-80%, -70%);
+  transform: translate(-80%, -80%);
   display: block;
   pointer-events: none;
   z-index: 2;
@@ -185,6 +185,33 @@ input[type="radio"]::-ms-check {
 .wf-field input[type="range"],
 .wf-field input[type="slider"] {
   width: 100%;
+}
+
+/* Range input container and value display */
+.wf-range-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.wf-range-container input[type="range"] {
+  flex: 1;
+  margin: 0;
+}
+
+.wf-range-value {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  min-width: 40px;
+  text-align: center;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 .wf-field input[type="file"] {
   background: #fff;
@@ -372,6 +399,17 @@ input.button-primary:hover {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+  
+  .wf-range-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .wf-range-value {
+    align-self: center;
+    min-width: 50px;
   }
 }
 
