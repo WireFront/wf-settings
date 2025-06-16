@@ -75,14 +75,30 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update value display when slider changes
             rangeInput.addEventListener('input', function() {
                 valueDisplay.textContent = this.value;
+                updateRangeProgress(this);
             });
             
             // Also update on change event for better compatibility
             rangeInput.addEventListener('change', function() {
                 valueDisplay.textContent = this.value;
+                updateRangeProgress(this);
             });
+            
+            // Initialize progress fill
+            updateRangeProgress(rangeInput);
         }
     });
+
+    // Function to update range slider progress fill
+    function updateRangeProgress(slider) {
+        var min = slider.min || 0;
+        var max = slider.max || 100;
+        var value = slider.value;
+        var percentage = ((value - min) / (max - min)) * 100;
+        
+        // Create gradient background for WebKit browsers
+        slider.style.background = 'linear-gradient(to right, #2563eb 0%, #2563eb ' + percentage + '%, #e2e8f0 ' + percentage + '%, #e2e8f0 100%)';
+    }
 
     // Dual Range Slider functionality
     document.querySelectorAll('.wf-dual-range-slider').forEach(function(slider) {
