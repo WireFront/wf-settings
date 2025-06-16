@@ -70,11 +70,15 @@ form.wf-settings-form {
 .wf-field select {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 5px 0;
+  padding: 10px 12px;
   font-size: 15px;
   background: #fafbfc;
   transition: border 0.2s;
   outline: none;
+}
+
+.wf-field input[type="range"]{
+  padding: 5px 0;
 }
 
 /* Custom color picker styling */
@@ -212,6 +216,79 @@ input[type="radio"]::-ms-check {
   text-align: center;
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Dual Range Slider Styles */
+.wf-dual-range-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.wf-dual-range-slider {
+  position: relative;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  margin: 10px 0;
+  flex: 1;
+}
+
+.wf-dual-range-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  transform: translateY(-50%);
+}
+
+.wf-dual-range-fill {
+  position: absolute;
+  top: 50%;
+  height: 7px;
+  background: #2563eb;
+  border-radius: 3px;
+  transform: translateY(-50%);
+  transition: all 0.1s ease;
+}
+
+.wf-dual-range-thumb {
+    position: absolute;
+    top: 50%;
+    width: 15px;
+    height: 15px;
+    background: #2563eb;
+    border: 2px solid #2563eb;
+    border-radius: 50%;
+    cursor: grab;
+    transform: translate(-50%, -50%);
+    transition: box-shadow 0.2s ease;
+    z-index: 2;
+}
+
+.wf-dual-range-thumb:hover {
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.wf-dual-range-thumb:active {
+  cursor: grabbing;
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.2);
+}
+
+.wf-dual-range-values {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wf-range-separator {
+  font-weight: 500;
+  color: #64748b;
+  display: none;
 }
 .wf-field input[type="file"] {
   background: #fff;
@@ -410,6 +487,14 @@ input.button-primary:hover {
   .wf-range-value {
     align-self: center;
     min-width: 50px;
+  }
+  
+  .wf-dual-range-container {
+    gap: 12px;
+  }
+  
+  .wf-dual-range-values {
+    gap: 12px;
   }
 }
 
