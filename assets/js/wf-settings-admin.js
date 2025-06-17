@@ -1,5 +1,20 @@
 // wf-settings-admin.js - Enhanced UI with notifications
 document.addEventListener('DOMContentLoaded', function() {
+    // Handle notification close buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('wf-notification-close') || e.target.getAttribute('data-action') === 'close') {
+            e.preventDefault();
+            const notification = e.target.closest('.wf-notification');
+            if (notification) {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(-10px)';
+                setTimeout(function() {
+                    notification.style.display = 'none';
+                }, 300);
+            }
+        }
+    });
+
     // Auto-hide notifications after 5 seconds
     const notifications = document.querySelectorAll('.wf-notification');
     notifications.forEach(function(notification) {
