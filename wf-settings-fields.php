@@ -2,6 +2,9 @@
 // wf-settings-fields.php
 // Define your settings fields here as an array. This file is loaded by the main plugin.
 
+// Include data sources for dynamic field options
+require_once plugin_dir_path(__FILE__) . 'wf-settings-data-sources.php';
+
 return [
     // Page configuration (special fields for page settings)
     "page_title" => "My Plugin Settings",
@@ -50,7 +53,7 @@ return [
             [ "value" => "option1", "label" => "Option 1" ],
             [ "value" => "option2", "label" => "Option 2" ]
         ],
-        "value" => null,
+        "value" => "option1",
         "required" => true,
         "description" => "Choose an option from the dropdown menu. This field is required."
     ],
@@ -132,5 +135,70 @@ return [
         "step" => 1,
         "required" => false,
         "description" => "Use the range slider to select a numeric value within the specified range."
+    ],
+    
+    // Examples using dynamic data sources
+    [
+        "id" => "selected-page",
+        "label" => "Select a Page",
+        "type" => "select",
+        "options" => wf_get_pages_data_source(),
+        "value" => null,
+        "required" => false,
+        "description" => "Choose a page from your WordPress site."
+    ],
+    [
+        "id" => "selected-posts",
+        "label" => "Select Posts",
+        "type" => "select",
+        "options" => wf_get_posts_data_source('post', 10), // Get latest 10 posts
+        "value" => null,
+        "required" => false,
+        "description" => "Choose from your latest blog posts."
+    ],
+    [
+        "id" => "user-roles",
+        "label" => "User Role Selection",
+        "type" => "radio",
+        "options" => wf_get_user_roles_data_source(),
+        "value" => null,
+        "required" => false,
+        "description" => "Select a user role for this setting."
+    ],
+    [
+        "id" => "categories",
+        "label" => "Post Categories",
+        "type" => "select",
+        "options" => wf_get_categories_data_source(),
+        "value" => null,
+        "required" => false,
+        "description" => "Choose a category from your site."
+    ],
+    [
+        "id" => "menu-selection",
+        "label" => "Navigation Menu",
+        "type" => "select",
+        "options" => wf_get_menus_data_source(),
+        "value" => null,
+        "required" => false,
+        "description" => "Select a navigation menu from your site."
+    ],
+    [
+        "id" => "post-type",
+        "label" => "Post Type",
+        "type" => "radio",
+        "options" => wf_get_post_types_data_source(),
+        "value" => null,
+        "required" => false,
+        "description" => "Choose a post type from your WordPress installation."
+    ],
+    [
+        "id" => "country",
+        "label" => "Country Selection",
+        "type" => "select",
+        "options" => wf_get_countries_data_source(),
+        "value" => null,
+        "required" => false,
+        "description" => "Select your country from the list."
     ]
 ];
