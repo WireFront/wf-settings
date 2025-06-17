@@ -26,6 +26,30 @@ return [
         ]
     ],
     [
+        "id" => "email-id",
+        "label" => "Email Address",
+        "type" => "textbox",
+        "value" => null,
+        "placeholder" => "Enter a valid email address",
+        "required" => true,
+        "description" => "Enter a valid email address. This field is required.",
+        "validation" => [
+            "type" => "email"
+        ]
+    ],
+    [
+        "id" => "url-id", 
+        "label" => "Website URL",
+        "type" => "textbox",
+        "value" => null,
+        "placeholder" => "https://example.com",
+        "required" => false,
+        "description" => "Enter a valid URL starting with http:// or https://",
+        "validation" => [
+            "type" => "url"
+        ]
+    ],
+    [
         "id" => "checkbox-id",
         "label" => "Checkbox Label",
         "type" => "checkbox",
@@ -66,7 +90,7 @@ return [
         "required" => false,
         "description" => "Enter detailed text up to 500 characters. This field supports multiple lines.",
         "validation" => [
-            "type" => "string",
+            "type" => "textarea",
             "minLength" => 0,
             "maxLength" => 500
         ]
@@ -87,7 +111,12 @@ return [
         "min" => 0,
         "max" => 100,
         "required" => false,
-        "description" => "Enter a number between 0 and 100. This field is optional."
+        "description" => "Enter a number between 0 and 100. This field is optional.",
+        "validation" => [
+            "type" => "number",
+            "min" => 0,
+            "max" => 100
+        ]
     ],
     [
         "id" => "file-id",
