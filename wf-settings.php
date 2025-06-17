@@ -172,7 +172,7 @@ class WF_Settings_Framework {
                 }
                 break;
             case 'select':
-                echo '<div style="position:relative;">';
+                echo '<div class="selectbox-wrapper">';
                 echo '<select id="' . $id . '" name="wf_settings[' . $id . ']" class="wf-select" ' . $required . '>';
                 if (!empty($field['options'])) {
                     foreach ($field['options'] as $opt) {

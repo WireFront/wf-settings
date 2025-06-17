@@ -81,6 +81,10 @@ form.wf-settings-form {
   padding: 3px 0;
 }
 
+.wf-field textarea{
+  min-height: 130px;
+}
+
 /* Custom color picker styling */
 .wf-field input[type="color"] {
   width: 44px;
@@ -476,6 +480,22 @@ input.button-primary:hover {
   background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%236b7280" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>');
   background-repeat: no-repeat;
   background-position: 8px 50%;
+}
+
+/* Selectbox Styling */
+.wf-field .selectbox-wrapper{
+  position: relative;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+.wf-field .selectbox-wrapper select{
+  min-width: 250px;
+}
+.wf-field .selectbox-wrapper .wf-select-arrow{
+  position: relative;
+  right: 35px;
+  height: 20px;
 }
 
 /* Notification styles */
