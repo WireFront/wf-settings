@@ -91,12 +91,12 @@ return [
     ],
     [
         "id" => "file-id",
-        "label" => "File Upload Label",
+        "label" => "Image Upload",
         "type" => "file",
         "value" => null,
         "required" => false,
         "accept" => ["image/*"],
-        "description" => "Upload an image file. Supported formats: JPG, PNG, GIF, etc."
+        "description" => "Upload an image file using WordPress media library. The field will store the attachment ID which can be used to retrieve file details. Supported formats: JPG, PNG, GIF, etc."
     ],
     [
         "id" => "color-id",
@@ -200,5 +200,22 @@ return [
         "value" => null,
         "required" => false,
         "description" => "Select your country from the list."
-    ]
+    ],
+    [
+        "id" => "document-upload",
+        "label" => "Document Upload",
+        "type" => "file",
+        "value" => null,
+        "required" => false,
+        "accept" => ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+        "description" => "Upload a document file (PDF, DOC, DOCX). Returns the WordPress attachment ID for use in your application."
+    ],
+    [
+        "id" => "any-file-upload",
+        "label" => "Any File Upload",
+        "type" => "file",
+        "value" => null,
+        "required" => false,
+        "description" => "Upload any type of file using WordPress media library. The attachment ID will be saved and can be used to retrieve file information."
+    ],
 ];
