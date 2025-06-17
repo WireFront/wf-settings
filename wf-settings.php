@@ -26,8 +26,22 @@ add_action('admin_enqueue_scripts', function($hook) {
         // Localize script for AJAX
         wp_localize_script('wf-settings-admin', 'wf_settings_ajax', [
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('wf_settings_media_nonce')
+            'nonce' => wp_create_nonce('wf_settings_media_nonce'),
+            'security_nonce' => wp_create_nonce('wf_settings_security')
         ]);
+    }
+});
+
+// Add security headers for the settings page
+add_action('admin_head', function() {
+    global $pagenow;
+    if ($pagenow === 'options-general.php' && isset($_GET['page']) && $_GET['page'] === 'wf-settings') {
+        // Add Content Security Policy header
+        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self';");
+        // Add other security headers
+        header("X-Content-Type-Options: nosniff");
+        header("X-Frame-Options: SAMEORIGIN");
+        header("X-XSS-Protection: 1; mode=block");
     }
 });
 
@@ -102,11 +116,11 @@ class WF_Settings_Framework {
             echo '<div class="wf-notifications">';
             foreach ($this->notifications as $notification) {
                 $type_class = $notification['type'] === 'error' ? 'wf-notification-error' : 'wf-notification-success';
-                $icon = $notification['type'] === 'error' ? '⚠️' : '✅';
-                echo '<div class="wf-notification ' . $type_class . '">';
-                echo '<span class="wf-notification-icon">' . $icon . '</span>';
+                $safe_icon = $notification['type'] === 'error' ? '⚠️' : '✅';
+                echo '<div class="wf-notification ' . esc_attr($type_class) . '">';
+                echo '<span class="wf-notification-icon">' . esc_html($safe_icon) . '</span>';
                 echo '<span class="wf-notification-message">' . esc_html($notification['message']) . '</span>';
-                echo '<button class="wf-notification-close" onclick="this.parentElement.style.display=\'none\'">&times;</button>';
+                echo '<button class="wf-notification-close" data-action="close" type="button">&times;</button>';
                 echo '</div>';
             }
             echo '</div>';
@@ -293,6 +307,16 @@ class WF_Settings_Framework {
 
     public function handle_save() {
         if (isset($_POST['wf_settings_nonce']) && wp_verify_nonce($_POST['wf_settings_nonce'], 'wf_settings_save')) {
+            // Rate limiting check
+            $user_id = get_current_user_id();
+            $rate_limit_key = "wf_settings_last_save_{$user_id}";
+            $last_save = get_transient($rate_limit_key);
+            
+            if ($last_save && (time() - $last_save) < 5) {
+                $this->add_notification('Please wait a few seconds before saving again.', 'error');
+                return;
+            }
+            
             try {
                 $fields = $this->fields;
                 $new_values = [];
@@ -305,7 +329,7 @@ class WF_Settings_Framework {
                     
                     // Special handling for file fields
                     if ($field['type'] === 'file') {
-                        if ($val && !$this->validate_attachment_id($val)) {
+                        if ($val && !$this->validate_file_upload($val, isset($field['accept']) ? $field['accept'] : [])) {
                             $label = isset($field['label']) ? $field['label'] : $id;
                             $validation_errors[] = "Invalid file selected for '{$label}'. Please select a valid file.";
                             continue;
@@ -328,6 +352,9 @@ class WF_Settings_Framework {
                             continue;
                         }
                         $val = $validated_val;
+                    } else {
+                        // Apply basic sanitization based on field type
+                        $val = $this->sanitize_by_type($val, $field['type']);
                     }
                     
                     $new_values[$id] = $val;
@@ -343,20 +370,26 @@ class WF_Settings_Framework {
                 $result = update_option($this->option_name, $new_values);
                 if ($result !== false) {
                     $this->add_notification('Settings saved successfully!', 'success');
+                    // Set rate limit
+                    set_transient($rate_limit_key, time(), 60);
+                    // Log successful save
+                    $this->log_security_event('settings_saved', 'Settings updated successfully');
                 } else {
                     $this->add_notification('Settings may not have changed or failed to save.', 'error');
                 }
                 
             } catch (Exception $e) {
-                $this->add_notification('An error occurred while saving settings: ' . $e->getMessage(), 'error');
+                $this->add_notification('An error occurred while saving settings: ' . esc_html($e->getMessage()), 'error');
+                $this->log_security_event('settings_save_error', 'Exception: ' . $e->getMessage());
             }
         } else if (isset($_POST['wf_settings_nonce'])) {
             $this->add_notification('Security verification failed. Please try again.', 'error');
+            $this->log_security_event('nonce_verification_failed', 'Invalid nonce for settings save');
         }
     }
 
     private function validate($val, $rules) {
-        // Simple validation logic (expand as needed)
+        // Enhanced validation with proper sanitization
         if ($rules['type'] === 'string') {
             $val = sanitize_text_field($val);
             $len = strlen($val);
@@ -366,6 +399,44 @@ class WF_Settings_Framework {
             if (isset($rules['maxLength']) && $len > $rules['maxLength']) {
                 $val = substr($val, 0, $rules['maxLength']);
             }
+        } elseif ($rules['type'] === 'email') {
+            $val = sanitize_email($val);
+            if (!is_email($val)) {
+                return false;
+            }
+        } elseif ($rules['type'] === 'url') {
+            $val = esc_url_raw($val);
+            if (!filter_var($val, FILTER_VALIDATE_URL)) {
+                return false;
+            }
+        } elseif ($rules['type'] === 'number' || $rules['type'] === 'integer') {
+            $val = intval($val);
+            if (isset($rules['min']) && $val < $rules['min']) {
+                return false;
+            }
+            if (isset($rules['max']) && $val > $rules['max']) {
+                return false;
+            }
+        } elseif ($rules['type'] === 'float') {
+            $val = floatval($val);
+            if (isset($rules['min']) && $val < $rules['min']) {
+                return false;
+            }
+            if (isset($rules['max']) && $val > $rules['max']) {
+                return false;
+            }
+        } elseif ($rules['type'] === 'textarea') {
+            $val = sanitize_textarea_field($val);
+            $len = strlen($val);
+            if (isset($rules['minLength']) && $len < $rules['minLength']) {
+                return false;
+            }
+            if (isset($rules['maxLength']) && $len > $rules['maxLength']) {
+                $val = substr($val, 0, $rules['maxLength']);
+            }
+        } else {
+            // Default: treat as text
+            $val = sanitize_text_field($val);
         }
         return $val;
     }
@@ -406,6 +477,127 @@ class WF_Settings_Framework {
         // Check if the attachment exists and is valid
         $attachment = get_post($attachment_id);
         return $attachment && $attachment->post_type === 'attachment';
+    }
+
+    private function validate_file_upload($attachment_id, $allowed_types = []) {
+        if (empty($attachment_id)) {
+            return false;
+        }
+        
+        // Check if the attachment exists and is valid
+        $attachment = get_post($attachment_id);
+        if (!$attachment || $attachment->post_type !== 'attachment') {
+            return false;
+        }
+        
+        // If allowed types are specified, validate file type
+        if (!empty($allowed_types)) {
+            $file_path = get_attached_file($attachment_id);
+            if (!$file_path) {
+                return false;
+            }
+            
+            $file_type = wp_check_filetype($file_path);
+            
+            // Check if file type is in allowed types
+            $type_allowed = false;
+            foreach ($allowed_types as $allowed_type) {
+                if (strpos($allowed_type, '*') !== false) {
+                    // Handle wildcard types like "image/*"
+                    $base_type = str_replace('*', '', $allowed_type);
+                    if (strpos($file_type['type'], $base_type) === 0) {
+                        $type_allowed = true;
+                        break;
+                    }
+                } elseif ($file_type['type'] === $allowed_type) {
+                    $type_allowed = true;
+                    break;
+                }
+            }
+            
+            if (!$type_allowed) {
+                return false;
+            }
+        }
+        
+        // Additional security checks
+        $file_path = get_attached_file($attachment_id);
+        if ($file_path && file_exists($file_path)) {
+            // Check file size (WordPress already handles this, but we can add custom limits)
+            $file_size = filesize($file_path);
+            $max_size = wp_max_upload_size();
+            
+            if ($file_size > $max_size) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    private function sanitize_by_type($value, $type) {
+        switch ($type) {
+            case 'textbox':
+            case 'hidden':
+                return sanitize_text_field($value);
+            case 'textarea':
+                return sanitize_textarea_field($value);
+            case 'email':
+                return sanitize_email($value);
+            case 'url':
+                return esc_url_raw($value);
+            case 'number':
+            case 'slider':
+                return intval($value);
+            case 'checkbox':
+                return $value ? 1 : 0;
+            case 'radio':
+            case 'select':
+                return sanitize_text_field($value);
+            case 'date':
+                // Validate date format
+                $date = DateTime::createFromFormat('Y-m-d', $value);
+                return ($date && $date->format('Y-m-d') === $value) ? $value : '';
+            case 'color':
+                // Validate hex color
+                return preg_match('/^#[a-f0-9]{6}$/i', $value) ? $value : '';
+            case 'file':
+                return intval($value); // Attachment ID
+            case 'range':
+                // Validate range format (e.g., "10-50")
+                if (preg_match('/^\d+-\d+$/', $value)) {
+                    return sanitize_text_field($value);
+                }
+                return '';
+            default:
+                return sanitize_text_field($value);
+        }
+    }
+
+    private function log_security_event($event_type, $details = '') {
+        // Optional: Log security-relevant events
+        if (defined('WF_SETTINGS_AUDIT_LOG') && WF_SETTINGS_AUDIT_LOG) {
+            $log_entry = [
+                'timestamp' => current_time('mysql'),
+                'user_id' => get_current_user_id(),
+                'user_login' => wp_get_current_user()->user_login,
+                'event_type' => $event_type,
+                'details' => $details,
+                'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+            ];
+            
+            // Store in database or log file
+            $log_option = get_option('wf_settings_audit_log', []);
+            $log_option[] = $log_entry;
+            
+            // Keep only last 100 entries to prevent database bloat
+            if (count($log_option) > 100) {
+                $log_option = array_slice($log_option, -100);
+            }
+            
+            update_option('wf_settings_audit_log', $log_option);
+        }
     }
 }
 
