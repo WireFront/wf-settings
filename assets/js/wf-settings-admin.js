@@ -232,4 +232,160 @@ document.addEventListener('DOMContentLoaded', function() {
             updateSlider();
         });
     });
+    
+    // WordPress Media Selector functionality
+    initializeMediaSelector();
+
+    function initializeMediaSelector() {
+        // Handle media selector button clicks
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('wf-select-media-button')) {
+                e.preventDefault();
+                openMediaSelector(e.target);
+            }
+            
+            if (e.target.classList.contains('wf-remove-media-button')) {
+                e.preventDefault();
+                removeSelectedMedia(e.target);
+            }
+        });
+    }
+
+    function openMediaSelector(button) {
+        const fieldId = button.getAttribute('data-field-id');
+        const acceptTypes = button.getAttribute('accept');
+        
+        // Check if wp.media is available
+        if (typeof wp === 'undefined' || typeof wp.media === 'undefined') {
+            alert('WordPress media library is not available. Please refresh the page and try again.');
+            return;
+        }
+        
+        // Parse accept types if provided
+        let libraryType = {};
+        if (acceptTypes) {
+            // Remove array brackets and quotes, split by comma
+            const types = acceptTypes.replace(/[\[\]"']/g, '').split(',').map(s => s.trim());
+            if (types.length > 0 && types[0] !== '') {
+                libraryType.type = types;
+            }
+        }
+        
+        // Create media frame
+        const mediaFrame = wp.media({
+            title: 'Select File',
+            button: {
+                text: 'Use this file'
+            },
+            multiple: false,
+            library: libraryType
+        });
+
+        // When file is selected
+        mediaFrame.on('select', function() {
+            try {
+                const attachment = mediaFrame.state().get('selection').first().toJSON();
+                updateFileField(fieldId, attachment);
+            } catch (error) {
+                console.error('Error selecting media:', error);
+                alert('Error selecting file. Please try again.');
+            }
+        });
+
+        // Open the media frame
+        try {
+            mediaFrame.open();
+        } catch (error) {
+            console.error('Error opening media frame:', error);
+            alert('Error opening media library. Please refresh the page and try again.');
+        }
+    }
+
+    function updateFileField(fieldId, attachment) {
+        const hiddenInput = document.getElementById(fieldId);
+        const previewContainer = document.querySelector('[data-field-id="' + fieldId + '"]');
+        const buttonsContainer = previewContainer.parentElement.querySelector('.wf-file-upload-buttons');
+
+        if (!hiddenInput || !previewContainer || !buttonsContainer) {
+            console.error('Could not find required elements for field:', fieldId);
+            return;
+        }
+
+        // Update hidden input with attachment ID
+        hiddenInput.value = attachment.id;
+
+        // Update preview
+        let previewHTML = '';
+        
+        if (attachment.type === 'image') {
+            const imageUrl = attachment.sizes && attachment.sizes.thumbnail ? attachment.sizes.thumbnail.url : attachment.url;
+            previewHTML = `
+                <div class="wf-file-preview-item">
+                    <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(attachment.title || attachment.filename)}" class="wf-file-preview-image" />
+                    <div class="wf-file-info">
+                        <span class="wf-file-name">${escapeHtml(attachment.title || attachment.filename)}</span>
+                        <span class="wf-file-id">ID: ${attachment.id}</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            const fileExtension = attachment.filename ? attachment.filename.split('.').pop().toLowerCase() : 'file';
+            previewHTML = `
+                <div class="wf-file-preview-item">
+                    <div class="wf-file-icon">📄</div>
+                    <div class="wf-file-info">
+                        <span class="wf-file-name">${escapeHtml(attachment.title || attachment.filename)}</span>
+                        <span class="wf-file-id">ID: ${attachment.id}</span>
+                        <span class="wf-file-type">${escapeHtml(fileExtension)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        previewContainer.innerHTML = previewHTML;
+        previewContainer.classList.add('has-file');
+
+        // Add remove button if it doesn't exist
+        if (!buttonsContainer.querySelector('.wf-remove-media-button')) {
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.className = 'button wf-remove-media-button';
+            removeButton.setAttribute('data-field-id', fieldId);
+            removeButton.textContent = 'Remove';
+            buttonsContainer.appendChild(removeButton);
+        }
+    }
+
+    function removeSelectedMedia(button) {
+        const fieldId = button.getAttribute('data-field-id');
+        const hiddenInput = document.getElementById(fieldId);
+        const previewContainer = document.querySelector('[data-field-id="' + fieldId + '"]');
+
+        if (!hiddenInput || !previewContainer) {
+            console.error('Could not find required elements for field:', fieldId);
+            return;
+        }
+
+        // Clear hidden input
+        hiddenInput.value = '';
+
+        // Update preview to show placeholder
+        previewContainer.innerHTML = '<div class="wf-file-placeholder">No file selected</div>';
+        previewContainer.classList.remove('has-file');
+
+        // Remove the remove button
+        button.remove();
+    }
+
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
 });
