@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: Wirefront Settings Framework
-Description: A lightweight developer-first WordPress settings framework that lets you define plugin options using a structured array. Includes all essential input types—textbox, checkbox, radio, select, file upload, sliders, and more. Designed for fast prototyping and reuse across projects. Easily retrieve saved values. Perfect for teams building modular, consistent, and scalable plugins.
-Version: 0.1.0
+Description: A lightweight developer-first WordPress settings framework that lets you define plugin options using a structured array. Includes all essential input types—textbox, checkbox, radio, select, file upload with WordPress media library integration, sliders, and more. Designed for fast prototyping and reuse across projects. Easily retrieve saved values. Perfect for teams building modular, consistent, and scalable plugins.
+Version: 0.2.0
 Author: Jonathan Cabato
 Author URI: https://wirefront.net
 License: MIT
@@ -17,8 +17,17 @@ if (!defined('ABSPATH')) exit;
 // Enqueue admin CSS/JS for settings page
 add_action('admin_enqueue_scripts', function($hook) {
     if ($hook === 'settings_page_wf-settings') {
+        // Enqueue WordPress media library
+        wp_enqueue_media();
+        
         wp_enqueue_style('wf-settings-admin', plugin_dir_url(__FILE__) . 'assets/css/wf-settings-admin.css', [], '1.0.0');
-        wp_enqueue_script('wf-settings-admin', plugin_dir_url(__FILE__) . 'assets/js/wf-settings-admin.js', [], '1.0.0', true);
+        wp_enqueue_script('wf-settings-admin', plugin_dir_url(__FILE__) . 'assets/js/wf-settings-admin.js', ['jquery', 'media-upload', 'media-views'], '1.0.0', true);
+        
+        // Localize script for AJAX
+        wp_localize_script('wf-settings-admin', 'wf_settings_ajax', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('wf_settings_media_nonce')
+        ]);
     }
 });
 
@@ -196,7 +205,49 @@ class WF_Settings_Framework {
                 echo '<input type="number" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="wf-input-number" ' . $min . ' ' . $max . ' ' . $step . ' ' . $required . ' />';
                 break;
             case 'file':
-                echo '<input type="file" id="' . $id . '" name="wf_settings_' . $id . '" class="wf-input-file" ' . $accept . ' ' . $required . ' />';
+                echo '<div class="wf-file-upload-container">';
+                echo '<input type="hidden" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="wf-file-attachment-id" />';
+                echo '<div class="wf-file-preview" data-field-id="' . $id . '">';
+                
+                // Display current file if exists
+                if ($value && $this->validate_attachment_id($value)) {
+                    $attachment = wp_get_attachment_url($value);
+                    $attachment_title = get_the_title($value);
+                    if ($attachment) {
+                        $file_type = wp_check_filetype($attachment);
+                        if (strpos($file_type['type'], 'image/') === 0) {
+                            // Use thumbnail if available, otherwise use full size
+                            $image_url = wp_get_attachment_image_url($value, 'thumbnail') ?: $attachment;
+                            echo '<div class="wf-file-preview-item">';
+                            echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($attachment_title) . '" class="wf-file-preview-image" />';
+                            echo '<div class="wf-file-info">';
+                            echo '<span class="wf-file-name">' . esc_html($attachment_title) . '</span>';
+                            echo '<span class="wf-file-id">ID: ' . esc_html($value) . '</span>';
+                            echo '</div>';
+                            echo '</div>';
+                        } else {
+                            echo '<div class="wf-file-preview-item">';
+                            echo '<div class="wf-file-icon">📄</div>';
+                            echo '<div class="wf-file-info">';
+                            echo '<span class="wf-file-name">' . esc_html($attachment_title) . '</span>';
+                            echo '<span class="wf-file-id">ID: ' . esc_html($value) . '</span>';
+                            echo '<span class="wf-file-type">' . esc_html($file_type['ext']) . '</span>';
+                            echo '</div>';
+                            echo '</div>';
+                        }
+                    }
+                } else {
+                    echo '<div class="wf-file-placeholder">No file selected</div>';
+                }
+                
+                echo '</div>';
+                echo '<div class="wf-file-upload-buttons">';
+                echo '<button type="button" class="button wf-media-button wf-select-media-button" data-field-id="' . $id . '" ' . $accept . '>Select File</button>';
+                if ($value && $this->validate_attachment_id($value)) {
+                    echo '<button type="button" class="button wf-media-button wf-remove-media-button" data-field-id="' . $id . '">Remove</button>';
+                }
+                echo '</div>';
+                echo '</div>';
                 break;
             case 'color':
                 echo '<input type="color" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="wf-input-color" ' . $required . ' />';
@@ -249,12 +300,17 @@ class WF_Settings_Framework {
                 
                 foreach ($fields as $field) {
                     $id = $field['id'];
-                    if ($field['type'] === 'file') {
-                        // File upload handling can be added here
-                        continue;
-                    }
                     
                     $val = isset($_POST['wf_settings'][$id]) ? $_POST['wf_settings'][$id] : null;
+                    
+                    // Special handling for file fields
+                    if ($field['type'] === 'file') {
+                        if ($val && !$this->validate_attachment_id($val)) {
+                            $label = isset($field['label']) ? $field['label'] : $id;
+                            $validation_errors[] = "Invalid file selected for '{$label}'. Please select a valid file.";
+                            continue;
+                        }
+                    }
                     
                     // Check required fields
                     if (!empty($field['required']) && (empty($val) && $val !== '0')) {
@@ -313,6 +369,44 @@ class WF_Settings_Framework {
         }
         return $val;
     }
+    
+    public function get_attachment_details($attachment_id) {
+        if (!$attachment_id) {
+            return null;
+        }
+        
+        $attachment = get_post($attachment_id);
+        if (!$attachment || $attachment->post_type !== 'attachment') {
+            return null;
+        }
+        
+        $url = wp_get_attachment_url($attachment_id);
+        $metadata = wp_get_attachment_metadata($attachment_id);
+        $file_type = wp_check_filetype($url);
+        
+        return [
+            'id' => $attachment_id,
+            'title' => $attachment->post_title,
+            'url' => $url,
+            'filename' => basename($url),
+            'type' => $file_type['type'],
+            'ext' => $file_type['ext'],
+            'metadata' => $metadata,
+            'alt_text' => get_post_meta($attachment_id, '_wp_attachment_image_alt', true),
+            'caption' => $attachment->post_excerpt,
+            'description' => $attachment->post_content
+        ];
+    }
+
+    private function validate_attachment_id($attachment_id) {
+        if (empty($attachment_id)) {
+            return false;
+        }
+        
+        // Check if the attachment exists and is valid
+        $attachment = get_post($attachment_id);
+        return $attachment && $attachment->post_type === 'attachment';
+    }
 }
 
 // Helper function
@@ -326,6 +420,12 @@ function wf_settings_val($id) {
     }
     
     return $instance->get_value($id);
+}
+
+// Helper function to get attachment details
+function wf_settings_get_attachment($id) {
+    $instance = WF_Settings_Framework::instance();
+    return $instance->get_attachment_details($id);
 }
 
 // Example usage (move to your plugin's admin page)
