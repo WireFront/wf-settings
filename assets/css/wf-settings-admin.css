@@ -73,7 +73,6 @@ form.wf-settings-form {
 .wf-field input[type="password"],
 .wf-field input[type="number"],
 .wf-field input[type="date"],
-.wf-field input[type="file"],
 .wf-field input[type="range"],
 .wf-field textarea,
 .wf-field select {
@@ -416,8 +415,7 @@ input[type="radio"]::-ms-check {
   display: none;
 }
 .wf-field input[type="file"] {
-  background: #fff;
-  padding: 6px 0;
+  display: none; /* Hide the default file input since we're using media selector */
 }
 .wf-field .wf-desc {
   color: #6b7280;
@@ -584,6 +582,122 @@ input.button-primary:hover {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* File Upload Container Styles */
+.wf-file-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wf-file-preview {
+  border: 2px dashed #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  background: #fafbfc;
+  transition: border-color 0.2s;
+}
+
+.wf-file-preview.has-file {
+  border-style: solid;
+  border-color: #2563eb;
+  background: #f8fafc;
+}
+
+.wf-file-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.wf-file-preview-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.wf-file-icon {
+  font-size: 40px;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.wf-file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.wf-file-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.wf-file-id {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.wf-file-type {
+  color: #6366f1;
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.wf-file-placeholder {
+  color: #9ca3af;
+  font-size: 14px;
+  padding: 20px;
+}
+
+.wf-file-upload-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.wf-media-button{
+  background-color: transparent!important;
+  padding: 0px 15px !important;
+  font-size: 12px !important;
+}
+
+.wf-select-media-button {
+  border: 1px solid #2563eb !important;
+  color: #2563eb!important;
+}
+
+.wf-select-media-button:hover {
+  background: #1d4ed8 !important;
+  color: #ffffff!important;
+}
+
+.wf-remove-media-button {
+  border: 1px solid #dc2626!important;
+  color: #dc2626!important;
+}
+
+.wf-remove-media-button:hover {
+  background: #dc2626 !important;
+  color: #ffffff!important;
 }
 
 /* Responsive Design - Media Queries */
