@@ -25,7 +25,7 @@
 
 /* Form and field styles */
 .wf-field {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   display: flex;
   flex-direction: column;
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
@@ -33,6 +33,15 @@
   margin-left: auto;
   margin-right: auto;
 }
+.wf-field:last-of-type {
+  border-bottom: 1px solid #EEEEEE;
+  padding-bottom: 25px;
+  margin-bottom: 25px;
+}
+.wf-field.wf-field-hidden{
+  display: none;
+}
+
 form.wf-settings-form {
   width: 95%;
   margin-left: auto;
@@ -137,7 +146,7 @@ form.wf-settings-form {
   font-weight: 400;
   font-size: 15px;
   margin-bottom: 0;
-  gap: 8px;
+  gap: 0px;
 }
 .wf-radio input[type="radio"] {
   appearance: none;
@@ -491,6 +500,7 @@ input.button-primary:hover {
 }
 .wf-field .selectbox-wrapper select{
   min-width: 250px;
+  padding-right: 30px;
 }
 .wf-field .selectbox-wrapper .wf-select-arrow{
   position: relative;
