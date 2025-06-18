@@ -2,7 +2,7 @@
 /*
 Plugin Name: Wirefront Settings Framework
 Description: A lightweight developer-first WordPress settings framework that lets you define plugin options using a structured array. Includes all essential input types—textbox, checkbox, radio, select, file upload with WordPress media library integration, sliders, and more. Designed for fast prototyping and reuse across projects. Easily retrieve saved values. Perfect for teams building modular, consistent, and scalable plugins.
-Version: 0.2.1
+Version: 0.2.2
 Author: Jonathan Cabato
 Author URI: https://wirefront.net
 License: MIT

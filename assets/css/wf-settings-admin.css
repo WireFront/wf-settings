@@ -714,6 +714,18 @@ input.button-primary:hover {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
 }
 
+/* Error styling for file upload fields */
+.wf-field.wf-field-error .wf-file-preview-item {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.wf-field.wf-field-error .wf-file-preview {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
 .wf-field.wf-field-error input[type="text"]:focus,
 .wf-field.wf-field-error input[type="email"]:focus,
 .wf-field.wf-field-error input[type="url"]:focus,
@@ -722,6 +734,18 @@ input.button-primary:hover {
   border-color: #dc2626 !important;
   background-color: #fff !important;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Focus state for file upload error fields */
+.wf-field.wf-field-error .wf-file-preview-item:hover {
+  border-color: #dc2626 !important;
+  background-color: #fff !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+.wf-field.wf-field-error .wf-file-preview:hover {
+  border-color: #dc2626 !important;
+  background-color: #fafbfc !important;
 }
 
 .wf-field.wf-field-error label {

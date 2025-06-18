@@ -380,6 +380,15 @@ document.addEventListener('DOMContentLoaded', function() {
         previewContainer.innerHTML = previewHTML;
         previewContainer.classList.add('has-file');
 
+        // Remove error state if file was successfully selected
+        const field = hiddenInput.closest('.wf-field');
+        if (field && field.classList.contains('wf-field-error')) {
+            field.classList.remove('wf-field-error');
+            
+            // Hide persistent error notifications when user fixes the issue
+            hidePersistentErrorNotifications();
+        }
+
         // Add remove button if it doesn't exist
         if (!buttonsContainer.querySelector('.wf-remove-media-button')) {
             const removeButton = document.createElement('button');
@@ -439,6 +448,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         hidePersistentErrorNotifications();
                     }
                 });
+            });
+        });
+        
+        // Add event listeners for file upload buttons to remove error state
+        const uploadButtons = document.querySelectorAll('.wf-upload-media-button');
+        uploadButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                const field = this.closest('.wf-field');
+                if (field && field.classList.contains('wf-field-error')) {
+                    field.classList.remove('wf-field-error');
+                    
+                    // Hide persistent error notifications when user starts fixing issues
+                    hidePersistentErrorNotifications();
+                }
             });
         });
     }
@@ -521,6 +544,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 });
+            });
+            
+            // Handle file upload fields separately - look for fields containing file upload containers
+            const fileUploadContainers = document.querySelectorAll('.wf-file-upload-container');
+            fileUploadContainers.forEach(function(container) {
+                const field = container.closest('.wf-field');
+                const label = field.querySelector('label');
+                
+                if (label) {
+                    const fieldName = label.textContent.trim();
+                    
+                    // ONLY highlight if this specific field name appears in the error message
+                    if (errorText.includes("'" + fieldName + "'")) {
+                        field.classList.add('wf-field-error');
+                    }
+                }
             });
         });
     }
