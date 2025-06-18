@@ -514,28 +514,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (label) {
                         const fieldName = label.textContent.trim();
-                        // Check if this field's name appears in the error message
-                        if (errorText.includes(fieldName) || errorText.includes("'" + fieldName + "'")) {
+                        
+                        // ONLY highlight if this specific field name appears in the error message
+                        if (errorText.includes("'" + fieldName + "'")) {
                             field.classList.add('wf-field-error');
                         }
-                    }
-                    
-                    // Enhanced validation error detection
-                    if (input.hasAttribute('required') && errorText.toLowerCase().includes('required')) {
-                        // Check if this is the specific field mentioned in the error
-                        const fieldName = label ? label.textContent.trim() : '';
-                        if (errorText.includes(fieldName)) {
-                            field.classList.add('wf-field-error');
-                        }
-                    }
-                    
-                    // Type-specific error detection
-                    if (type === 'email' && (errorText.toLowerCase().includes('email') || errorText.toLowerCase().includes('invalid data'))) {
-                        field.classList.add('wf-field-error');
-                    }
-                    
-                    if (type === 'url' && (errorText.toLowerCase().includes('url') || errorText.toLowerCase().includes('invalid data'))) {
-                        field.classList.add('wf-field-error');
                     }
                 });
             });

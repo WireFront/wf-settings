@@ -372,6 +372,14 @@ class WF_Settings_Framework {
                                 $validation_errors[] = "Field '{$label}' must contain a valid email address.";
                             } elseif ($field['validation']['type'] === 'url') {
                                 $validation_errors[] = "Field '{$label}' must contain a valid URL starting with http:// or https://.";
+                            } elseif ($field['validation']['type'] === 'textarea') {
+                                if (isset($field['validation']['minLength'])) {
+                                    $minLen = $field['validation']['minLength'];
+                                    $currentLen = strlen($val);
+                                    $validation_errors[] = "Field '{$label}' must be at least {$minLen} characters long. Currently {$currentLen} characters.";
+                                } else {
+                                    $validation_errors[] = "Field '{$label}' contains invalid data.";
+                                }
                             } else {
                                 $validation_errors[] = "Field '{$label}' contains invalid data.";
                             }
