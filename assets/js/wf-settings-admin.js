@@ -1,11 +1,16 @@
-// wf-settings-admin.js - Enhanced UI with notifications
+// wf-settings-admin.js - Enhanced UI with notifications and improved UX
 document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced form validation and UX functionality
+    initializeFormValidationUX();
+    
     // Handle notification close buttons
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('wf-notification-close') || e.target.getAttribute('data-action') === 'close') {
             e.preventDefault();
             const notification = e.target.closest('.wf-notification');
             if (notification) {
+                // Remove persistent class when manually closed
+                notification.classList.remove('wf-notification-persistent');
                 notification.style.opacity = '0';
                 notification.style.transform = 'translateY(-10px)';
                 setTimeout(function() {
@@ -15,18 +20,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Auto-hide notifications after 5 seconds
+    // Modified auto-hide notifications - make error notifications persistent until user interacts
     const notifications = document.querySelectorAll('.wf-notification');
     notifications.forEach(function(notification) {
-        setTimeout(function() {
-            if (notification.style.display !== 'none') {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateY(-10px)';
-                setTimeout(function() {
-                    notification.style.display = 'none';
-                }, 300);
-            }
-        }, 5000);
+        if (notification.classList.contains('wf-notification-error')) {
+            // Mark error notifications as persistent
+            notification.classList.add('wf-notification-persistent');
+        } else {
+            // Auto-hide success notifications after 5 seconds
+            setTimeout(function() {
+                if (notification.style.display !== 'none' && !notification.classList.contains('wf-notification-persistent')) {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateY(-10px)';
+                    setTimeout(function() {
+                        notification.style.display = 'none';
+                    }, 300);
+                }
+            }, 5000);
+        }
     });
 
     // Smooth scroll to notifications if they exist
@@ -38,16 +49,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Enhanced form submission with loading state
+    // Enhanced form submission with loading state and value preservation
     const form = document.querySelector('.wf-settings-form');
     const submitButton = document.querySelector('.wf-settings-form input[type="submit"]');
     
     if (form && submitButton) {
         form.addEventListener('submit', function() {
+            // Store form values before submission in case of validation errors
+            storeFormValues();
+            
             submitButton.value = 'Saving...';
             submitButton.disabled = true;
             submitButton.style.opacity = '0.7';
         });
+    }
+    
+    // Clear stored form data if we see a success notification (form saved successfully)
+    const successNotifications = document.querySelectorAll('.wf-notification-success');
+    if (successNotifications.length > 0) {
+        localStorage.removeItem('wf_settings_form_data');
     }
 
     // Password visibility toggle
@@ -390,6 +410,149 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Remove the remove button
         button.remove();
+    }
+
+    // Function to initialize enhanced form validation UX
+    function initializeFormValidationUX() {
+        // Supported field types for enhanced UX
+        const supportedTypes = ['text', 'email', 'url', 'date', 'textarea'];
+        
+        // Restore form values from localStorage if they exist (after validation errors)
+        restoreFormValues();
+        
+        // Add error highlighting based on current error notifications
+        highlightErrorFields();
+        
+        // Add event listeners to remove error state when user starts typing
+        supportedTypes.forEach(function(type) {
+            const selector = type === 'textarea' ? 'textarea' : 'input[type="' + type + '"]';
+            const inputs = document.querySelectorAll('.wf-field ' + selector);
+            
+            inputs.forEach(function(input) {
+                // Remove error state when user starts editing
+                input.addEventListener('input', function() {
+                    const field = this.closest('.wf-field');
+                    if (field && field.classList.contains('wf-field-error')) {
+                        field.classList.remove('wf-field-error');
+                        
+                        // Hide persistent error notifications when user starts fixing issues
+                        hidePersistentErrorNotifications();
+                    }
+                });
+            });
+        });
+    }
+    
+    function storeFormValues() {
+        const supportedTypes = ['text', 'email', 'url', 'date', 'textarea'];
+        const formData = {};
+        
+        supportedTypes.forEach(function(type) {
+            const selector = type === 'textarea' ? 'textarea' : 'input[type="' + type + '"]';
+            const inputs = document.querySelectorAll('.wf-field ' + selector);
+            
+            inputs.forEach(function(input) {
+                if (input.name) {
+                    formData[input.name] = input.value;
+                }
+            });
+        });
+        
+        if (Object.keys(formData).length > 0) {
+            localStorage.setItem('wf_settings_form_data', JSON.stringify(formData));
+        }
+    }
+    
+    function restoreFormValues() {
+        const storedData = localStorage.getItem('wf_settings_form_data');
+        if (!storedData) return;
+        
+        try {
+            const formData = JSON.parse(storedData);
+            const supportedTypes = ['text', 'email', 'url', 'date', 'textarea'];
+            
+            supportedTypes.forEach(function(type) {
+                const selector = type === 'textarea' ? 'textarea' : 'input[type="' + type + '"]';
+                const inputs = document.querySelectorAll('.wf-field ' + selector);
+                
+                inputs.forEach(function(input) {
+                    if (input.name && formData.hasOwnProperty(input.name)) {
+                        // Only restore if the current value is empty (server-side preservation takes priority)
+                        if (!input.value.trim()) {
+                            input.value = formData[input.name];
+                        }
+                    }
+                });
+            });
+            
+            // Clear stored data after restoration
+            localStorage.removeItem('wf_settings_form_data');
+        } catch (e) {
+            console.error('Error restoring form values:', e);
+        }
+    }
+    
+    function highlightErrorFields() {
+        // Check if there are error notifications
+        const errorNotifications = document.querySelectorAll('.wf-notification-error');
+        if (errorNotifications.length === 0) return;
+        
+        // Parse error messages to identify which fields have errors
+        errorNotifications.forEach(function(notification) {
+            const errorText = notification.textContent || notification.innerText;
+            
+            // Look for field names in error messages and highlight corresponding fields
+            const supportedTypes = ['text', 'email', 'url', 'date', 'textarea'];
+            
+            supportedTypes.forEach(function(type) {
+                const selector = type === 'textarea' ? 'textarea' : 'input[type="' + type + '"]';
+                const inputs = document.querySelectorAll('.wf-field ' + selector);
+                
+                inputs.forEach(function(input) {
+                    const field = input.closest('.wf-field');
+                    const label = field.querySelector('label');
+                    
+                    if (label) {
+                        const fieldName = label.textContent.trim();
+                        // Check if this field's name appears in the error message
+                        if (errorText.includes(fieldName) || errorText.includes("'" + fieldName + "'")) {
+                            field.classList.add('wf-field-error');
+                        }
+                    }
+                    
+                    // Enhanced validation error detection
+                    if (input.hasAttribute('required') && errorText.toLowerCase().includes('required')) {
+                        // Check if this is the specific field mentioned in the error
+                        const fieldName = label ? label.textContent.trim() : '';
+                        if (errorText.includes(fieldName)) {
+                            field.classList.add('wf-field-error');
+                        }
+                    }
+                    
+                    // Type-specific error detection
+                    if (type === 'email' && (errorText.toLowerCase().includes('email') || errorText.toLowerCase().includes('invalid data'))) {
+                        field.classList.add('wf-field-error');
+                    }
+                    
+                    if (type === 'url' && (errorText.toLowerCase().includes('url') || errorText.toLowerCase().includes('invalid data'))) {
+                        field.classList.add('wf-field-error');
+                    }
+                });
+            });
+        });
+    }
+    
+    function hidePersistentErrorNotifications() {
+        const persistentNotifications = document.querySelectorAll('.wf-notification-persistent');
+        
+        persistentNotifications.forEach(function(notification) {
+            notification.classList.remove('wf-notification-persistent');
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateY(-10px)';
+            setTimeout(function() {
+                notification.style.display = 'none';
+            }, 300);
+        });
     }
 
     // Helper function to escape HTML

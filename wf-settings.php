@@ -158,7 +158,11 @@ class WF_Settings_Framework {
         $id = esc_attr($field['id']);
         $label = isset($field['label']) ? esc_html($field['label']) : '';
         $type = isset($field['type']) ? $field['type'] : 'textbox';
-        $value = isset($options[$id]) ? $options[$id] : (isset($field['value']) ? $field['value'] : '');
+        
+        // Prioritize submitted values over saved options for better UX during validation errors
+        $submitted_value = isset($_POST['wf_settings'][$id]) ? $_POST['wf_settings'][$id] : null;
+        $value = $submitted_value !== null ? $submitted_value : (isset($options[$id]) ? $options[$id] : (isset($field['value']) ? $field['value'] : ''));
+        
         $required = !empty($field['required']) ? 'required' : '';
         $placeholder = isset($field['placeholder']) ? 'placeholder="' . esc_attr($field['placeholder']) . '"' : '';
         $min = isset($field['min']) ? 'min="' . esc_attr($field['min']) . '"' : '';
@@ -176,7 +180,21 @@ class WF_Settings_Framework {
         }
         switch ($type) {
             case 'textbox':
-                echo '<input type="text" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="wf-input-text" ' . $placeholder . ' ' . $required . ' />';
+                // Determine input type based on validation
+                $input_type = 'text';
+                $css_class = 'wf-input-text';
+                
+                if (isset($field['validation'])) {
+                    if ($field['validation']['type'] === 'email') {
+                        $input_type = 'email';
+                        $css_class = 'wf-input-email';
+                    } elseif ($field['validation']['type'] === 'url') {
+                        $input_type = 'url';
+                        $css_class = 'wf-input-url';
+                    }
+                }
+                
+                echo '<input type="' . $input_type . '" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="' . $css_class . '" ' . $placeholder . ' ' . $required . ' />';
                 break;
             case 'checkbox':
                 $checked = $value ? 'checked' : '';
@@ -348,7 +366,15 @@ class WF_Settings_Framework {
                         $validated_val = $this->validate($val, $field['validation']);
                         if ($validated_val === false) {
                             $label = isset($field['label']) ? $field['label'] : $id;
-                            $validation_errors[] = "Field '{$label}' contains invalid data.";
+                            
+                            // Provide more specific error messages
+                            if ($field['validation']['type'] === 'email') {
+                                $validation_errors[] = "Field '{$label}' must contain a valid email address.";
+                            } elseif ($field['validation']['type'] === 'url') {
+                                $validation_errors[] = "Field '{$label}' must contain a valid URL starting with http:// or https://.";
+                            } else {
+                                $validation_errors[] = "Field '{$label}' contains invalid data.";
+                            }
                             continue;
                         }
                         $val = $validated_val;

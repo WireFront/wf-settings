@@ -70,6 +70,8 @@ form.wf-settings-form {
 }
 
 .wf-field input[type="text"],
+.wf-field input[type="email"],
+.wf-field input[type="url"],
 .wf-field input[type="password"],
 .wf-field input[type="number"],
 .wf-field input[type="date"],
@@ -699,6 +701,38 @@ input.button-primary:hover {
 .wf-remove-media-button:hover {
   background: #dc2626 !important;
   color: #ffffff!important;
+}
+
+/* Form validation error styles */
+.wf-field.wf-field-error input[type="text"],
+.wf-field.wf-field-error input[type="email"],
+.wf-field.wf-field-error input[type="url"],
+.wf-field.wf-field-error input[type="date"],
+.wf-field.wf-field-error textarea {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.wf-field.wf-field-error input[type="text"]:focus,
+.wf-field.wf-field-error input[type="email"]:focus,
+.wf-field.wf-field-error input[type="url"]:focus,
+.wf-field.wf-field-error input[type="date"]:focus,
+.wf-field.wf-field-error textarea:focus {
+  border-color: #dc2626 !important;
+  background-color: #fff !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+.wf-field.wf-field-error label {
+  color: #dc2626 !important;
+}
+
+/* Notification styles for persistent error display */
+.wf-notification.wf-notification-persistent {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  transition: none !important;
 }
 
 /* Responsive Design - Media Queries */
