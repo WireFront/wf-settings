@@ -2,7 +2,7 @@
 /*
 Plugin Name: Wirefront Settings Framework
 Description: A lightweight developer-first WordPress settings framework that lets you define plugin options using a structured array. Includes all essential input types—textbox, checkbox, radio, select, file upload with WordPress media library integration, sliders, and more. Designed for fast prototyping and reuse across projects. Easily retrieve saved values. Perfect for teams building modular, consistent, and scalable plugins.
-Version: 0.2.0
+Version: 0.2.1
 Author: Jonathan Cabato
 Author URI: https://wirefront.net
 License: MIT
@@ -161,7 +161,10 @@ class WF_Settings_Framework {
         
         // Prioritize submitted values over saved options for better UX during validation errors
         $submitted_value = isset($_POST['wf_settings'][$id]) ? $_POST['wf_settings'][$id] : null;
-        $value = $submitted_value !== null ? $submitted_value : (isset($options[$id]) ? $options[$id] : (isset($field['value']) ? $field['value'] : ''));
+        $raw_value = $submitted_value !== null ? $submitted_value : (isset($options[$id]) ? $options[$id] : (isset($field['value']) ? $field['value'] : ''));
+        
+        // Properly handle quotes by unslashing stored values
+        $value = wp_unslash($raw_value);
         
         $required = !empty($field['required']) ? 'required' : '';
         $placeholder = isset($field['placeholder']) ? 'placeholder="' . esc_attr($field['placeholder']) . '"' : '';
@@ -344,6 +347,11 @@ class WF_Settings_Framework {
                     $id = $field['id'];
                     
                     $val = isset($_POST['wf_settings'][$id]) ? $_POST['wf_settings'][$id] : null;
+                    
+                    // Unslash the incoming data to prevent quote escaping issues
+                    if ($val !== null) {
+                        $val = wp_unslash($val);
+                    }
                     
                     // Special handling for file fields
                     if ($field['type'] === 'file') {
@@ -573,10 +581,13 @@ class WF_Settings_Framework {
         switch ($type) {
             case 'textbox':
             case 'hidden':
-                return sanitize_text_field($value);
+                // Custom sanitization that preserves special characters
+                return $this->sanitize_text_preserve_chars($value);
             case 'textarea':
-                return sanitize_textarea_field($value);
+                // Custom sanitization that preserves special characters
+                return $this->sanitize_textarea_preserve_chars($value);
             case 'email':
+                // Value is already unslashed in handle_save(), just sanitize
                 return sanitize_email($value);
             case 'url':
                 return esc_url_raw($value);
@@ -606,6 +617,42 @@ class WF_Settings_Framework {
             default:
                 return sanitize_text_field($value);
         }
+    }
+
+    private function sanitize_text_preserve_chars($value) {
+        // Remove script tags and other dangerous content but preserve special characters
+        $value = strip_tags($value);
+        
+        // Remove null bytes and invalid UTF-8
+        $value = str_replace(chr(0), '', $value);
+        
+        // Validate UTF-8
+        if (!mb_check_encoding($value, 'UTF-8')) {
+            $value = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+        }
+        
+        // Trim whitespace
+        $value = trim($value);
+        
+        return $value;
+    }
+    
+    private function sanitize_textarea_preserve_chars($value) {
+        // Remove script tags and other dangerous content but preserve special characters and line breaks
+        $value = strip_tags($value);
+        
+        // Remove null bytes and invalid UTF-8
+        $value = str_replace(chr(0), '', $value);
+        
+        // Validate UTF-8
+        if (!mb_check_encoding($value, 'UTF-8')) {
+            $value = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+        }
+        
+        // Trim whitespace but preserve line breaks
+        $value = trim($value);
+        
+        return $value;
     }
 
     private function log_security_event($event_type, $details = '') {
