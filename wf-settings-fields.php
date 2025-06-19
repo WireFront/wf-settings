@@ -1,6 +1,9 @@
 <?php
-// wf-settings-fields.php
-// Define your settings fields here as an array. This file is loaded by the main plugin.
+/**
+ * Settings fields configuration for Wirefront Settings Framework
+ * Define your settings fields here as an array. This file is loaded by the main plugin.
+ *
+ */
 
 // Include data sources for dynamic field options
 require_once plugin_dir_path(__FILE__) . 'wf-settings-data-sources.php';
@@ -87,11 +90,11 @@ return [
         "type" => "textarea",
         "value" => null,
         "placeholder" => "Enter text here",
-        "required" => false,
+        "required" => true,
         "description" => "Enter detailed text up to 500 characters. This field supports multiple lines.",
         "validation" => [
             "type" => "textarea",
-            "minLength" => 0,
+            "minLength" => 3,
             "maxLength" => 500
         ]
     ],
@@ -123,7 +126,7 @@ return [
         "label" => "Image Upload",
         "type" => "file",
         "value" => null,
-        "required" => false,
+        "required" => true,
         "accept" => ["image/*"],
         "description" => "Upload an image file using WordPress media library. The field will store the attachment ID which can be used to retrieve file details. Supported formats: JPG, PNG, GIF, etc."
     ],
@@ -235,7 +238,7 @@ return [
         "label" => "Document Upload",
         "type" => "file",
         "value" => null,
-        "required" => false,
+        "required" => true,
         "accept" => ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
         "description" => "Upload a document file (PDF, DOC, DOCX). Returns the WordPress attachment ID for use in your application."
     ],
