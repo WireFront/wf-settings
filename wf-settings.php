@@ -1,21 +1,42 @@
 <?php
+/**
+ * Plugin Name: Wirefront Settings Framework
+ * Description: A lightweight developer-first WordPress settings framework that lets you define plugin options using a structured array. Includes all essential input types—textbox, checkbox, radio, select, file upload with WordPress media library integration, sliders, and more. Designed for fast prototyping and reuse across projects. Easily retrieve saved values. Perfect for teams building modular, consistent, and scalable plugins.
+ * Version: 1.0.0
+ * Author: Jonathan Cabato
+ * Author URI: https://wirefront.net
+ * License: GPL v2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: wirefront-settings-framework
+ * Plugin URI: https://github.com/WireFront/wf-settings
+ *
+ */
+
 /*
-Plugin Name: Wirefront Settings Framework
-Description: A lightweight developer-first WordPress settings framework that lets you define plugin options using a structured array. Includes all essential input types—textbox, checkbox, radio, select, file upload with WordPress media library integration, sliders, and more. Designed for fast prototyping and reuse across projects. Easily retrieve saved values. Perfect for teams building modular, consistent, and scalable plugins.
-Version: 0.2.2
-Author: Jonathan Cabato
-Author URI: https://wirefront.net
-License: MIT
-License URI: https://opensource.org/licenses/MIT
-Text Domain: wirefront-settings-framework
-Plugin URI: https://github.com/WireFront/wf-settings
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
 if (!defined('ABSPATH')) exit;
 
-// Enqueue admin CSS/JS for settings page
-add_action('admin_enqueue_scripts', function($hook) {
+/**
+ * Enqueue admin CSS/JS for settings page
+ *
+ * @param string $hook The current admin page hook
+ */
+function wf_settings_enqueue_admin_scripts($hook) {
     if ($hook === 'settings_page_wf-settings') {
         // Enqueue WordPress media library
         wp_enqueue_media();
@@ -30,22 +51,12 @@ add_action('admin_enqueue_scripts', function($hook) {
             'security_nonce' => wp_create_nonce('wf_settings_security')
         ]);
     }
-});
+}
+add_action('admin_enqueue_scripts', 'wf_settings_enqueue_admin_scripts');
 
-// Add security headers for the settings page
-add_action('admin_head', function() {
-    global $pagenow;
-    if ($pagenow === 'options-general.php' && isset($_GET['page']) && $_GET['page'] === 'wf-settings') {
-        // Add Content Security Policy header
-        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self';");
-        // Add other security headers
-        header("X-Content-Type-Options: nosniff");
-        header("X-Frame-Options: SAMEORIGIN");
-        header("X-XSS-Protection: 1; mode=block");
-    }
-});
-
-// Main class
+/**
+ * Main settings framework class
+ */
 class WF_Settings_Framework {
     private static $instance = null;
     private $fields = [];
@@ -53,6 +64,11 @@ class WF_Settings_Framework {
     private $option_name = 'wf_settings';
     private $notifications = [];
 
+    /**
+     * Get singleton instance
+     *
+     * @return WF_Settings_Framework
+     */
     public static function instance() {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -60,6 +76,11 @@ class WF_Settings_Framework {
         return self::$instance;
     }
 
+    /**
+     * Set fields configuration
+     *
+     * @param array $fields Fields configuration array
+     */
     public function set_fields($fields) {
         // Extract page configuration if present
         if (isset($fields['page_title']) || isset($fields['page_description'])) {
@@ -74,10 +95,21 @@ class WF_Settings_Framework {
         $this->fields = $fields;
     }
 
+    /**
+     * Get fields configuration
+     *
+     * @return array
+     */
     public function get_fields() {
         return $this->fields;
     }
 
+    /**
+     * Get a saved field value
+     *
+     * @param string $id Field ID
+     * @return mixed Field value or null if not found
+     */
     public function get_value($id) {
         $options = get_option($this->option_name, []);
         $value = isset($options[$id]) ? $options[$id] : null;
@@ -104,6 +136,12 @@ class WF_Settings_Framework {
         return $value;
     }
 
+    /**
+     * Add a notification message
+     *
+     * @param string $message Notification message
+     * @param string $type Notification type (success|error)
+     */
     private function add_notification($message, $type = 'success') {
         $this->notifications[] = [
             'message' => $message,
@@ -111,6 +149,9 @@ class WF_Settings_Framework {
         ];
     }
 
+    /**
+     * Render notifications
+     */
     private function render_notifications() {
         if (!empty($this->notifications)) {
             echo '<div class="wf-notifications">';
@@ -127,6 +168,9 @@ class WF_Settings_Framework {
         }
     }
 
+    /**
+     * Render page header
+     */
     public function render_page_header() {
         if (!empty($this->page_config)) {
             echo '<div class="wf-page-header">';
@@ -140,6 +184,9 @@ class WF_Settings_Framework {
         }
     }
 
+    /**
+     * Render the main settings form
+     */
     public function render_form() {
         $this->render_page_header();
         $this->render_notifications();
@@ -154,6 +201,12 @@ class WF_Settings_Framework {
         echo '</form>';
     }
 
+    /**
+     * Render individual field
+     *
+     * @param array $field Field configuration
+     * @param array $options Saved options
+     */
     private function render_field($field, $options) {
         $id = esc_attr($field['id']);
         $label = isset($field['label']) ? esc_html($field['label']) : '';
@@ -326,6 +379,9 @@ class WF_Settings_Framework {
         echo '</div>';
     }
 
+    /**
+     * Handle form submission and save settings
+     */
     public function handle_save() {
         if (isset($_POST['wf_settings_nonce']) && wp_verify_nonce($_POST['wf_settings_nonce'], 'wf_settings_save')) {
             // Rate limiting check
@@ -430,6 +486,13 @@ class WF_Settings_Framework {
         }
     }
 
+    /**
+     * Validate field value against rules
+     *
+     * @param mixed $val Value to validate
+     * @param array $rules Validation rules
+     * @return mixed Validated value or false on failure
+     */
     private function validate($val, $rules) {
         // Enhanced validation with proper sanitization
         if ($rules['type'] === 'string') {
@@ -483,6 +546,12 @@ class WF_Settings_Framework {
         return $val;
     }
     
+    /**
+     * Get attachment details by ID
+     *
+     * @param int $attachment_id Attachment ID
+     * @return array|null Attachment details or null if not found
+     */
     public function get_attachment_details($attachment_id) {
         if (!$attachment_id) {
             return null;
@@ -511,6 +580,12 @@ class WF_Settings_Framework {
         ];
     }
 
+    /**
+     * Validate attachment ID
+     *
+     * @param int $attachment_id Attachment ID to validate
+     * @return bool True if valid, false otherwise
+     */
     private function validate_attachment_id($attachment_id) {
         if (empty($attachment_id)) {
             return false;
@@ -521,6 +596,13 @@ class WF_Settings_Framework {
         return $attachment && $attachment->post_type === 'attachment';
     }
 
+    /**
+     * Validate file upload
+     *
+     * @param int   $attachment_id Attachment ID
+     * @param array $allowed_types Allowed MIME types
+     * @return bool True if valid, false otherwise
+     */
     private function validate_file_upload($attachment_id, $allowed_types = []) {
         if (empty($attachment_id)) {
             return false;
@@ -577,6 +659,13 @@ class WF_Settings_Framework {
         return true;
     }
 
+    /**
+     * Sanitize value by field type
+     *
+     * @param mixed  $value Value to sanitize
+     * @param string $type Field type
+     * @return mixed Sanitized value
+     */
     private function sanitize_by_type($value, $type) {
         switch ($type) {
             case 'textbox':
@@ -619,6 +708,12 @@ class WF_Settings_Framework {
         }
     }
 
+    /**
+     * Sanitize text while preserving special characters
+     *
+     * @param string $value Value to sanitize
+     * @return string Sanitized value
+     */
     private function sanitize_text_preserve_chars($value) {
         // Remove script tags and other dangerous content but preserve special characters
         $value = strip_tags($value);
@@ -637,6 +732,12 @@ class WF_Settings_Framework {
         return $value;
     }
     
+    /**
+     * Sanitize textarea while preserving special characters and line breaks
+     *
+     * @param string $value Value to sanitize
+     * @return string Sanitized value
+     */
     private function sanitize_textarea_preserve_chars($value) {
         // Remove script tags and other dangerous content but preserve special characters and line breaks
         $value = strip_tags($value);
@@ -655,6 +756,12 @@ class WF_Settings_Framework {
         return $value;
     }
 
+    /**
+     * Log security events
+     *
+     * @param string $event_type Type of event
+     * @param string $details Event details
+     */
     private function log_security_event($event_type, $details = '') {
         // Optional: Log security-relevant events
         if (defined('WF_SETTINGS_AUDIT_LOG') && WF_SETTINGS_AUDIT_LOG) {
@@ -664,8 +771,8 @@ class WF_Settings_Framework {
                 'user_login' => wp_get_current_user()->user_login,
                 'event_type' => $event_type,
                 'details' => $details,
-                'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+                'ip_address' => sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'] ?? 'unknown')),
+                'user_agent' => sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'] ?? 'unknown'))
             ];
             
             // Store in database or log file
@@ -682,7 +789,12 @@ class WF_Settings_Framework {
     }
 }
 
-// Helper function
+/**
+ * Helper function to get a field value
+ *
+ * @param string $id Field ID
+ * @return mixed Field value or null if not found
+ */
 function wf_settings_val($id) {
     $instance = WF_Settings_Framework::instance();
     
@@ -695,19 +807,32 @@ function wf_settings_val($id) {
     return $instance->get_value($id);
 }
 
-// Helper function to get attachment details
+/**
+ * Helper function to get attachment details
+ *
+ * @param int $id Attachment ID
+ * @return array|null Attachment details array or null if not found
+ */
 function wf_settings_get_attachment($id) {
     $instance = WF_Settings_Framework::instance();
     return $instance->get_attachment_details($id);
 }
 
-// Example usage (move to your plugin's admin page)
-add_action('admin_menu', function() {
-    add_options_page('WF Settings', 'WF Settings', 'manage_options', 'wf-settings', function() {
-        $fields = include __DIR__ . '/wf-settings-fields.php';
-        $wf = WF_Settings_Framework::instance();
-        $wf->set_fields($fields);
-        $wf->handle_save();
-        $wf->render_form();
-    });
-});
+/**
+ * Render the settings page
+ */
+function wf_settings_render_admin_page() {
+    $fields = include __DIR__ . '/wf-settings-fields.php';
+    $wf = WF_Settings_Framework::instance();
+    $wf->set_fields($fields);
+    $wf->handle_save();
+    $wf->render_form();
+}
+
+/**
+ * Add admin menu for settings page
+ */
+function wf_settings_add_admin_menu() {
+    add_options_page('WF Settings', 'WF Settings', 'manage_options', 'wf-settings', 'wf_settings_render_admin_page');
+}
+add_action('admin_menu', 'wf_settings_add_admin_menu');
