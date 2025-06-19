@@ -1,7 +1,9 @@
 <?php
-// wf-settings-data-sources.php
-// Dynamic data sources for populating form fields in the Wirefront Settings Framework
-// This file provides functions to fetch WordPress data like pages, posts, users, etc.
+/**
+ * Dynamic data sources for populating form fields in the Wirefront Settings Framework
+ * This file provides functions to fetch WordPress data like pages, posts, users, etc.
+ *
+ */
 
 if (!defined('ABSPATH')) exit;
 
