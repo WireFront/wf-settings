@@ -372,10 +372,88 @@ class WF_Settings_Framework {
                 echo '<span class="wf-range-value wf-range-max">' . esc_attr($max_val) . '</span>';
                 echo '</div>';
                 break;
+            case 'repeater':
+                // Handle repeater fields
+                $repeater_values = is_array($value) ? $value : [];
+                $subfield_type = isset($field['subfield_type']) ? $field['subfield_type'] : 'textbox';
+                $subfield_config = isset($field['subfield']) ? $field['subfield'] : [];
+                
+                echo '<div class="wf-repeater-container" data-field-id="' . $id . '" data-subfield-type="' . esc_attr($subfield_type) . '">';
+                echo '<div class="wf-repeater-items">';
+                
+                // Render existing values
+                if (!empty($repeater_values)) {
+                    foreach ($repeater_values as $index => $item_value) {
+                        $this->render_repeater_item($id, $index, $item_value, $subfield_type, $subfield_config);
+                    }
+                } else {
+                    // Render one empty item by default
+                    $this->render_repeater_item($id, 0, '', $subfield_type, $subfield_config);
+                }
+                
+                echo '</div>';
+                echo '<div class="wf-repeater-controls">';
+                echo '<button type="button" class="wf-repeater-add-btn" data-target="' . $id . '"><span class="dashicons dashicons-plus-alt"></span> Add Item</button>';
+                echo '</div>';
+                echo '</div>';
+                break;
             default:
                 echo '<input type="text" id="' . $id . '" name="wf_settings[' . $id . ']" value="' . esc_attr($value) . '" class="wf-input-text" ' . $placeholder . ' ' . $required . ' />';
         }
         
+        echo '</div>';
+    }
+
+    /**
+     * Render a single repeater item
+     *
+     * @param string $field_id Parent field ID
+     * @param int $index Item index
+     * @param mixed $value Item value
+     * @param string $subfield_type Subfield type
+     * @param array $subfield_config Subfield configuration
+     */
+    private function render_repeater_item($field_id, $index, $value, $subfield_type, $subfield_config) {
+        $item_id = $field_id . '_' . $index;
+        $item_name = 'wf_settings[' . $field_id . '][' . $index . ']';
+        
+        // Get subfield configuration
+        $placeholder = isset($subfield_config['placeholder']) ? 'placeholder="' . esc_attr($subfield_config['placeholder']) . '"' : '';
+        $min = isset($subfield_config['min']) ? 'min="' . esc_attr($subfield_config['min']) . '"' : '';
+        $max = isset($subfield_config['max']) ? 'max="' . esc_attr($subfield_config['max']) . '"' : '';
+        $step = isset($subfield_config['step']) ? 'step="' . esc_attr($subfield_config['step']) . '"' : '';
+        
+        echo '<div class="wf-repeater-item" data-index="' . $index . '">';
+        echo '<div class="wf-repeater-item-content">';
+        
+        // Render the appropriate input type
+        switch ($subfield_type) {
+            case 'textbox':
+                echo '<input type="text" name="' . $item_name . '" value="' . esc_attr($value) . '" class="wf-input-text wf-repeater-input" ' . $placeholder . ' />';
+                break;
+            case 'email':
+                echo '<input type="email" name="' . $item_name . '" value="' . esc_attr($value) . '" class="wf-input-email wf-repeater-input" ' . $placeholder . ' />';
+                break;
+            case 'url':
+                echo '<input type="url" name="' . $item_name . '" value="' . esc_attr($value) . '" class="wf-input-url wf-repeater-input" ' . $placeholder . ' />';
+                break;
+            case 'number':
+                echo '<input type="number" name="' . $item_name . '" value="' . esc_attr($value) . '" class="wf-input-number wf-repeater-input" ' . $min . ' ' . $max . ' ' . $step . ' />';
+                break;
+            case 'date':
+                echo '<input type="date" name="' . $item_name . '" value="' . esc_attr($value) . '" class="wf-input-date wf-repeater-input" />';
+                break;
+            case 'textarea':
+                echo '<textarea name="' . $item_name . '" class="wf-textarea wf-repeater-input" ' . $placeholder . '>' . esc_textarea($value) . '</textarea>';
+                break;
+            default:
+                echo '<input type="text" name="' . $item_name . '" value="' . esc_attr($value) . '" class="wf-input-text wf-repeater-input" ' . $placeholder . ' />';
+        }
+        
+        echo '</div>';
+        echo '<div class="wf-repeater-item-controls">';
+        echo '<button type="button" class="wf-repeater-remove-btn" data-target="' . $field_id . '"><span class="dashicons dashicons-minus"></span></button>';
+        echo '</div>';
         echo '</div>';
     }
 
@@ -415,6 +493,20 @@ class WF_Settings_Framework {
                             $label = isset($field['label']) ? $field['label'] : $id;
                             $validation_errors[] = "Invalid file selected for '{$label}'. Please select a valid file.";
                             continue;
+                        }
+                    }
+                    
+                    // Special handling for repeater fields
+                    if ($field['type'] === 'repeater') {
+                        if (is_array($val)) {
+                            // Filter out empty values
+                            $val = array_filter($val, function($item) {
+                                return !empty(trim($item));
+                            });
+                            // Re-index the array to avoid gaps
+                            $val = array_values($val);
+                        } else {
+                            $val = [];
                         }
                     }
                     
@@ -703,6 +795,18 @@ class WF_Settings_Framework {
                     return sanitize_text_field($value);
                 }
                 return '';
+            case 'repeater':
+                // Sanitize repeater values
+                if (is_array($value)) {
+                    $sanitized_values = [];
+                    foreach ($value as $item) {
+                        if (!empty($item)) {
+                            $sanitized_values[] = sanitize_text_field($item);
+                        }
+                    }
+                    return $sanitized_values;
+                }
+                return [];
             default:
                 return sanitize_text_field($value);
         }
