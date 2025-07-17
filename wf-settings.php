@@ -41,6 +41,9 @@ function wf_settings_enqueue_admin_scripts($hook) {
         // Enqueue WordPress media library
         wp_enqueue_media();
         
+        // Enqueue dashicons for repeater field buttons
+        wp_enqueue_style('dashicons');
+        
         wp_enqueue_style('wf-settings-admin', plugin_dir_url(__FILE__) . 'assets/css/wf-settings-admin.css', [], '1.0.0');
         wp_enqueue_script('wf-settings-admin', plugin_dir_url(__FILE__) . 'assets/js/wf-settings-admin.js', ['jquery', 'media-upload', 'media-views'], '1.0.0', true);
         
@@ -499,12 +502,46 @@ class WF_Settings_Framework {
                     // Special handling for repeater fields
                     if ($field['type'] === 'repeater') {
                         if (is_array($val)) {
-                            // Filter out empty values
-                            $val = array_filter($val, function($item) {
-                                return !empty(trim($item));
-                            });
-                            // Re-index the array to avoid gaps
-                            $val = array_values($val);
+                            // Filter out empty values and sanitize based on subfield type
+                            $subfield_type = isset($field['subfield_type']) ? $field['subfield_type'] : 'textbox';
+                            $sanitized_items = [];
+                            
+                            foreach ($val as $item) {
+                                $trimmed_item = trim($item);
+                                if (!empty($trimmed_item)) {
+                                    // Sanitize based on subfield type
+                                    switch ($subfield_type) {
+                                        case 'email':
+                                            $sanitized_item = sanitize_email($trimmed_item);
+                                            if (is_email($sanitized_item)) {
+                                                $sanitized_items[] = $sanitized_item;
+                                            }
+                                            break;
+                                        case 'url':
+                                            $sanitized_item = esc_url_raw($trimmed_item);
+                                            if (filter_var($sanitized_item, FILTER_VALIDATE_URL)) {
+                                                $sanitized_items[] = $sanitized_item;
+                                            }
+                                            break;
+                                        case 'number':
+                                            $sanitized_item = floatval($trimmed_item);
+                                            $sanitized_items[] = $sanitized_item;
+                                            break;
+                                        case 'date':
+                                            $date = DateTime::createFromFormat('Y-m-d', $trimmed_item);
+                                            if ($date && $date->format('Y-m-d') === $trimmed_item) {
+                                                $sanitized_items[] = $trimmed_item;
+                                            }
+                                            break;
+                                        case 'textarea':
+                                            $sanitized_items[] = sanitize_textarea_field($trimmed_item);
+                                            break;
+                                        default: // textbox
+                                            $sanitized_items[] = sanitize_text_field($trimmed_item);
+                                    }
+                                }
+                            }
+                            $val = $sanitized_items;
                         } else {
                             $val = [];
                         }
