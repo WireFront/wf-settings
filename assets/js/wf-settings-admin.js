@@ -270,6 +270,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // WordPress Media Selector functionality
     initializeMediaSelector();
+    
+    // Initialize repeater field functionality
+    initializeRepeaterFields();
 
     function initializeMediaSelector() {
         // Handle media selector button clicks
@@ -587,5 +590,133 @@ document.addEventListener('DOMContentLoaded', function() {
             "'": '&#039;'
         };
         return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    // Initialize repeater fields functionality
+    function initializeRepeaterFields() {
+        // Handle add button clicks
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('wf-repeater-add-btn') || e.target.closest('.wf-repeater-add-btn')) {
+                e.preventDefault();
+                const button = e.target.classList.contains('wf-repeater-add-btn') ? e.target : e.target.closest('.wf-repeater-add-btn');
+                const fieldId = button.getAttribute('data-target');
+                addRepeaterItem(fieldId);
+            }
+        });
+
+        // Handle remove button clicks
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('wf-repeater-remove-btn') || e.target.closest('.wf-repeater-remove-btn')) {
+                e.preventDefault();
+                const button = e.target.classList.contains('wf-repeater-remove-btn') ? e.target : e.target.closest('.wf-repeater-remove-btn');
+                const item = button.closest('.wf-repeater-item');
+                const fieldId = button.getAttribute('data-target');
+                removeRepeaterItem(item, fieldId);
+            }
+        });
+
+        // Initialize existing repeater fields
+        document.querySelectorAll('.wf-repeater-container').forEach(function(container) {
+            updateRepeaterIndices(container);
+        });
+    }
+
+    function addRepeaterItem(fieldId) {
+        const container = document.querySelector('.wf-repeater-container[data-field-id="' + fieldId + '"]');
+        if (!container) return;
+
+        const itemsContainer = container.querySelector('.wf-repeater-items');
+        const subfieldType = container.getAttribute('data-subfield-type');
+        const currentItems = itemsContainer.querySelectorAll('.wf-repeater-item');
+        const newIndex = currentItems.length;
+
+        // Create new item
+        const newItem = document.createElement('div');
+        newItem.className = 'wf-repeater-item';
+        newItem.setAttribute('data-index', newIndex);
+
+        // Generate input HTML based on subfield type
+        let inputHTML = '';
+        const inputName = 'wf_settings[' + fieldId + '][' + newIndex + ']';
+        
+        switch (subfieldType) {
+            case 'textbox':
+                inputHTML = '<input type="text" name="' + inputName + '" value="" class="wf-input-text wf-repeater-input" />';
+                break;
+            case 'email':
+                inputHTML = '<input type="email" name="' + inputName + '" value="" class="wf-input-email wf-repeater-input" />';
+                break;
+            case 'url':
+                inputHTML = '<input type="url" name="' + inputName + '" value="" class="wf-input-url wf-repeater-input" />';
+                break;
+            case 'number':
+                inputHTML = '<input type="number" name="' + inputName + '" value="" class="wf-input-number wf-repeater-input" />';
+                break;
+            case 'date':
+                inputHTML = '<input type="date" name="' + inputName + '" value="" class="wf-input-date wf-repeater-input" />';
+                break;
+            case 'textarea':
+                inputHTML = '<textarea name="' + inputName + '" class="wf-textarea wf-repeater-input"></textarea>';
+                break;
+            default:
+                inputHTML = '<input type="text" name="' + inputName + '" value="" class="wf-input-text wf-repeater-input" />';
+        }
+
+        newItem.innerHTML = `
+            <div class="wf-repeater-item-content">
+                ${inputHTML}
+            </div>
+            <div class="wf-repeater-item-controls">
+                <button type="button" class="wf-repeater-remove-btn" data-target="${fieldId}"><span class="dashicons dashicons-minus"></span></button>
+            </div>
+        `;
+
+        itemsContainer.appendChild(newItem);
+
+        // Focus on the new input
+        const newInput = newItem.querySelector('.wf-repeater-input');
+        if (newInput) {
+            newInput.focus();
+        }
+
+        // Update indices
+        updateRepeaterIndices(container);
+    }
+
+    function removeRepeaterItem(item, fieldId) {
+        const container = document.querySelector('.wf-repeater-container[data-field-id="' + fieldId + '"]');
+        if (!container) return;
+
+        const itemsContainer = container.querySelector('.wf-repeater-items');
+        const items = itemsContainer.querySelectorAll('.wf-repeater-item');
+
+        // Don't remove the last item if it's the only one
+        if (items.length <= 1) {
+            // Clear the input instead
+            const input = item.querySelector('.wf-repeater-input');
+            if (input) {
+                input.value = '';
+            }
+            return;
+        }
+
+        item.remove();
+        updateRepeaterIndices(container);
+    }
+
+    function updateRepeaterIndices(container) {
+        const itemsContainer = container.querySelector('.wf-repeater-items');
+        const items = itemsContainer.querySelectorAll('.wf-repeater-item');
+        const fieldId = container.getAttribute('data-field-id');
+
+        items.forEach(function(item, index) {
+            item.setAttribute('data-index', index);
+            
+            const input = item.querySelector('.wf-repeater-input');
+            if (input) {
+                const newName = 'wf_settings[' + fieldId + '][' + index + ']';
+                input.setAttribute('name', newName);
+            }
+        });
     }
 });

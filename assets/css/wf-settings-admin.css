@@ -875,3 +875,144 @@ input.button-primary:hover {
     width: 55%;
   }
 }
+
+/* Repeater Field Styles */
+.wf-repeater-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wf-repeater-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wf-repeater-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.wf-repeater-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.wf-repeater-item-content {
+  flex: 1;
+}
+
+.wf-repeater-input {
+  width: 100% !important;
+  margin: 0 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  background: #fff !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.wf-repeater-input:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+  outline: none !important;
+}
+
+.wf-repeater-input.wf-textarea {
+  min-height: 80px !important;
+  resize: vertical !important;
+}
+
+.wf-repeater-item-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wf-repeater-remove-btn {
+  background: #ef4444 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 6px 8px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 30px !important;
+  height: 30px !important;
+}
+
+.wf-repeater-remove-btn:hover {
+  background: #dc2626 !important;
+  transform: scale(1.05) !important;
+}
+
+.wf-repeater-remove-btn .dashicons {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 16px !important;
+}
+
+.wf-repeater-controls {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 8px;
+}
+
+.wf-repeater-add-btn {
+  background: #2563eb !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.wf-repeater-add-btn:hover {
+  background: #1d4ed8 !important;
+  transform: translateY(-1px) !important;
+}
+
+.wf-repeater-add-btn .dashicons {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 16px !important;
+}
+
+/* Responsive design for repeater fields */
+@media (max-width: 768px) {
+  .wf-repeater-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .wf-repeater-item-controls {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  
+  .wf-repeater-remove-btn {
+    width: auto !important;
+    min-width: 60px !important;
+  }
+}

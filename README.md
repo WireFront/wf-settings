@@ -421,6 +421,92 @@ Store data that shouldn't be visible to users but needs to be maintained across 
 ]
 ```
 
+
+### 🔁 Repeater Fields (NEW)
+
+#### **Dynamic Repeater Field**
+The Repeater Field type allows users to dynamically add or remove multiple input fields of the same type (textbox, email, url, number, date, textarea) with plus/minus buttons. This is ideal for collecting lists of emails, team members, URLs, dates, prices, or any repeatable data.
+
+**Key Features:**
+- Supports 6 subfield types: `textbox`, `email`, `url`, `number`, `date`, `textarea`
+- Dynamic add/remove with plus/minus buttons
+- Auto-focus on new fields
+- Prevents removal of last field (clears content instead)
+- Responsive, mobile-friendly UI
+- WordPress admin styling and dashicons
+- Indexed array data structure for easy retrieval
+- Type-specific validation and sanitization
+
+**Example Usage:**
+```php
+// Basic text repeater
+[
+    "id" => "team-members",
+    "label" => "Team Members",
+    "type" => "repeater",
+    "subfield_type" => "textbox",
+    "subfield" => [
+        "placeholder" => "Enter team member name"
+    ]
+]
+
+// Email repeater with validation
+[
+    "id" => "contact-emails",
+    "label" => "Contact Email Addresses",
+    "type" => "repeater",
+    "subfield_type" => "email",
+    "subfield" => [
+        "placeholder" => "Enter email address"
+    ]
+]
+
+// Date repeater
+[
+    "id" => "important-dates",
+    "label" => "Important Dates",
+    "type" => "repeater",
+    "subfield_type" => "date"
+]
+```
+
+**Other Supported Subfield Types:**
+```php
+// URL repeater
+[
+    "id" => "website-urls",
+    "label" => "Website URLs",
+    "type" => "repeater",
+    "subfield_type" => "url",
+    "subfield" => ["placeholder" => "https://example.com"]
+]
+
+// Number repeater
+[
+    "id" => "product-prices",
+    "label" => "Product Prices",
+    "type" => "repeater",
+    "subfield_type" => "number",
+    "subfield" => ["min" => 0, "max" => 10000, "step" => 0.01]
+]
+
+// Textarea repeater
+[
+    "id" => "descriptions",
+    "label" => "Product Descriptions",
+    "type" => "repeater",
+    "subfield_type" => "textarea",
+    "subfield" => ["placeholder" => "Enter product description here..."]
+]
+```
+
+**Retrieving Repeater Values:**
+```php
+$emails = wf_settings_val('contact-emails'); // Returns array of emails
+$team = wf_settings_val('team-members'); // Returns array of names
+```
+
+
 ### 🔧 Advanced Field Configuration
 
 Every field type supports additional configuration options:
