@@ -250,4 +250,77 @@ return [
         "required" => false,
         "description" => "Upload any type of file using WordPress media library. The attachment ID will be saved and can be used to retrieve file information."
     ],
+    
+    // Repeater field examples
+    [
+        "id" => "team-members",
+        "label" => "Team Members",
+        "type" => "repeater",
+        "subfield_type" => "textbox",
+        "value" => [],
+        "required" => false,
+        "description" => "Add team member names. Click 'Add Item' to add more members.",
+        "subfield" => [
+            "placeholder" => "Enter team member name"
+        ]
+    ],
+    [
+        "id" => "contact-emails",
+        "label" => "Contact Email Addresses",
+        "type" => "repeater",
+        "subfield_type" => "email",
+        "value" => [],
+        "required" => false,
+        "description" => "Add multiple email addresses for contact purposes.",
+        "subfield" => [
+            "placeholder" => "Enter email address"
+        ]
+    ],
+    [
+        "id" => "website-urls",
+        "label" => "Website URLs",
+        "type" => "repeater",
+        "subfield_type" => "url",
+        "value" => [],
+        "required" => false,
+        "description" => "Add multiple website URLs for reference.",
+        "subfield" => [
+            "placeholder" => "https://example.com"
+        ]
+    ],
+    [
+        "id" => "important-dates",
+        "label" => "Important Dates",
+        "type" => "repeater",
+        "subfield_type" => "date",
+        "value" => [],
+        "required" => false,
+        "description" => "Add important dates for your organization."
+    ],
+    [
+        "id" => "product-prices",
+        "label" => "Product Prices",
+        "type" => "repeater",
+        "subfield_type" => "number",
+        "value" => [],
+        "required" => false,
+        "description" => "Add product prices (numbers only).",
+        "subfield" => [
+            "min" => 0,
+            "max" => 10000,
+            "step" => 0.01
+        ]
+    ],
+    [
+        "id" => "descriptions",
+        "label" => "Product Descriptions",
+        "type" => "repeater",
+        "subfield_type" => "textarea",
+        "value" => [],
+        "required" => false,
+        "description" => "Add multiple product descriptions with textarea input.",
+        "subfield" => [
+            "placeholder" => "Enter product description here..."
+        ]
+    ],
 ];
